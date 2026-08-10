@@ -31,10 +31,11 @@ Log a HOLD and stop. Doing nothing is a valid, journaled outcome.
 
 1. **Use this template → make your copy private.** Your journal fills with real balances and positions.
 2. Clone it and open in [Claude Code](https://claude.com/claude-code) (or Cursor, or any coding agent).
-3. Say **"initialize"**. You get a ~10-minute interview about your goals, risk limits, and how much
-   autonomy you're handing over. It writes `PROFILE.md` and fills in `LOOP_PROMPT.md`.
-4. Connect your broker, prove the order path works, run one cycle by hand.
-5. Schedule it.
+3. Say **"initialize"** (or `/sidecar-init`). A ~10-minute interview about your goals, risk limits,
+   and how much autonomy you're handing over. It writes `PROFILE.md`, fills in `LOOP_PROMPT.md` and
+   `ops/`, and hands you your scheduler prompt ready to paste.
+4. **You** connect the broker — enabling agent trading, funding, and OAuth all need a human.
+5. Prove the order path works, run one cycle by hand, read what it wrote, then schedule it.
 
 Steps 4–5 in detail: **[SETUP.md](SETUP.md)** · The scheduler prompt: **[ops/ROUTINE_PROMPT.md](ops/ROUTINE_PROMPT.md)**
 

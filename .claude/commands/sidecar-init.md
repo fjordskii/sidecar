@@ -7,9 +7,10 @@ Configure this repo as the user's trading loop.
 Read `INTERVIEW.md` and follow it exactly. It is a conversation, not a form — one topic at a time,
 push once on vague answers, reflect back what you heard after each section.
 
-Produce all three outputs: `PROFILE.md` (their answers, in their words), a fully filled-in
-`LOOP_PROMPT.md` with every `{{PLACEHOLDER}}` replaced, and a seeded `JOURNAL.md` with the standing
-rules and a `CYCLE 0` entry.
+Produce every output listed there: `PROFILE.md` (their answers, in their words), a fully filled-in
+`LOOP_PROMPT.md`, a seeded `JOURNAL.md`, filled-in `ops/` files, and — printed in the chat as one
+copy-pasteable block — their scheduler prompt with all placeholders resolved, plus the routine config
+checklist.
 
 Do not trade, do not run a cycle, and do not touch anything else in the repo during setup.
 

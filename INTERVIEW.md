@@ -152,8 +152,45 @@ then reread it as a cold agent with no context and fix anything that doesn't sta
 then one `## CYCLE 0` entry dated today: initialization, starting capital, opening thesis, and
 anything they want bought on the first live cycle.
 
+**`ops/`** — you already collected every value these need, so fill them in rather than making the
+user do it twice:
+
+- **`ops/run.sh`** — fill `{{REPO_PATH}}`, `{{ACCOUNT_ID}}`, `{{BROKER}}`, `{{MCP_SERVER}}`,
+  `{{MODEL}}`, `{{AUTONOMY_LINE}}`. For `{{CLI_PATH}}`/`{{NODE_PATH}}`, run `which claude` and
+  `which node` and hardcode the real results — a guessed `PATH` is the single most common reason a
+  local job fails silently. If they chose cloud-only, still fill it; it's their fallback.
+- **`ops/sidecar.plist.example`** — only if they chose local. Substitute the absolute paths and
+  match the hours to their cadence.
+
+### Hand them the routine prompt, filled in
+
+If they chose a cloud routine, do **not** just point at `ops/ROUTINE_PROMPT.md` and leave them to
+substitute placeholders by hand. Take the template there, fill every value from this interview
+(`{{BROKER}}`, `{{ACCOUNT_ID}}`, `{{MCP_SERVER}}`, `{{SLOTS}}`, and the `{{AUTONOMY_LINE}}` matching
+what you wrote into `LOOP_PROMPT.md`), and print the finished prompt in the chat as one copy-pasteable
+block. Alongside it, give them the rest of the routine config as a short checklist with their actual
+values: repo URL, tools allowlist (**including `Bash`** — without it there's no `git push` and the
+cycle loses its journal entry), the broker MCP connector, model, `persist_session: off`, and the cron
+expression for their cadence and timezone — with the UTC/DST caveat if the cron is fixed-UTC.
+
+This is the step users are most likely to get subtly wrong, and the failure modes are quiet: a
+missing `Bash` tool or a locally-added-but-not-connected MCP server produces a routine that runs,
+looks fine, and accomplishes nothing.
+
 **Then:** `git add -A && git commit -m "init: configure Sidecar loop"` — but **don't push**; they may
-not have a private remote yet. Tell them what's next in order — connect broker, verify read *and*
-order paths, run one cycle by hand, read the entry, *then* schedule — and point them at `SETUP.md`.
-If they chose live money with full autonomy, say once, plainly, what happens the first time the
-schedule fires.
+not have a private remote yet.
+
+Close with what's next, in order, and be explicit that the remaining steps need *them*, not you:
+
+1. **Broker** — enable agent trading, complete the investment profile, options approval if needed,
+   fund it. In the broker's app; you can't do any of it.
+2. **Connect the MCP server** — you can run the command, they approve the OAuth flow in a browser.
+   If they're going cloud, they must **also** add it as a connector on claude.ai; a cloud session
+   cannot see servers added locally.
+3. **Create their private repo** and push.
+4. **Verify both paths** — a read call, then a review/preview call to prove orders aren't blocked.
+5. **Run one cycle by hand** and read the entry it wrote.
+6. **Then** schedule it, with the prompt and checklist you just handed them.
+
+Point at `SETUP.md` for the detail, and offer to walk through it now. If they chose live money with
+full autonomy, say once, plainly, what will happen the first time the schedule fires.
