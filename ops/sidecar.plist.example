@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Sidecar local scheduler (macOS launchd).
+
+  Install:
+    cp ops/sidecar.plist.example ~/Library/LaunchAgents/com.sidecar.loop.plist
+    # edit the two paths below to match your machine, then:
+    launchctl load ~/Library/LaunchAgents/com.sidecar.loop.plist
+    launchctl list | grep sidecar
+
+  Times are LOCAL to the machine, so unlike a fixed-UTC cloud cron this follows DST on its
+  own — one real advantage of the local path. The offsets below (:38, :41, :33 rather than
+  :30) are deliberate: they keep cycles off the exact half-hour, away from the thickest
+  scheduled-job and market-open noise.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sidecar.loop</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/ABSOLUTE/PATH/TO/sidecar/ops/run.sh</string>
+    </array>
+
+    <!-- 3x per day. Weekdays are enforced inside run.sh, not here. -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Hour</key><integer>9</integer>
+            <key>Minute</key><integer>38</integer>
+        </dict>
+        <dict>
+            <key>Hour</key><integer>12</integer>
+            <key>Minute</key><integer>41</integer>
+        </dict>
+        <dict>
+            <key>Hour</key><integer>15</integer>
+            <key>Minute</key><integer>33</integer>
+        </dict>
+    </array>
+
+    <key>StandardOutPath</key>
+    <string>/ABSOLUTE/PATH/TO/sidecar/ops/run.log</string>
+    <key>StandardErrorPath</key>
+    <string>/ABSOLUTE/PATH/TO/sidecar/ops/run.log</string>
+
+    <!-- Never fire on load/login — a cycle should only run on its schedule. -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

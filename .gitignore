@@ -1,0 +1,14 @@
+# Run logs contain balances, positions, and full cycle summaries.
+ops/run.log
+*.log
+
+# Session/lock artifacts from agent tooling.
+.claude/*.lock
+.claude/settings.local.json
+
+# Local env / credentials — never commit broker tokens.
+.env
+.env.*
+!.env.example
+
+.DS_Store
