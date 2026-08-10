@@ -29,9 +29,6 @@ Make sure they know what they're switching on:
 > This runs an AI agent against a real brokerage account on a schedule. Once live, it places real
 > orders without asking you first, on days you've forgotten about it. That's the design. Everything
 > I'm about to ask makes sure it does that inside limits you actually chose.
->
-> Two things first: fund it with an amount you'd genuinely shrug off — the account this came from
-> started at ten dollars — and use paper trading first if your broker has it.
 
 - **Live money or paper?**
 - **What would make you shut it off?** Worth more than any risk questionnaire. Whatever they say

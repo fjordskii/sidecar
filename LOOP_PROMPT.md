@@ -50,7 +50,7 @@ same change.
 {{OUTSIDE_PORTFOLIO}}
 
 **Do not buy: {{DO_NOT_DUPLICATE}}.** Buying exposure the core already holds is the same bet with
-more steps and more fees — it wastes the only advantage a small active sleeve has.
+more steps and more fees — it wastes the only advantage an active sleeve has.
 
 ### Outside-account check (advice only)
 

@@ -37,6 +37,8 @@ on a Tuesday. If a line doesn't say what you meant, edit it. Highest-leverage te
 
 **Robinhood:**
 
+No paper environment on this path — every order from step 4 onward is real money.
+
 1. Enable agent trading in the app. Robinhood designates **one specific account** for it — others
    reject agent orders. Note that account number.
 2. Complete your investment profile. Suitability gates block buys until you do.
@@ -44,7 +46,7 @@ on a Tuesday. If a line doesn't say what you meant, edit it. Highest-leverage te
    is authoritative. Test with a small order rather than trusting the flag.)*
 3. Options approval if your mandate uses them. Level 2 = long calls/puts, covered calls, CSPs. Takes
    a day or two.
-4. Fund it. Small. ACH takes days to settle; until then the loop correctly logs HOLD cycles.
+4. Fund it. ACH takes days to settle; until then the loop correctly logs HOLD cycles.
 5. Connect the MCP server:
    ```bash
    claude mcp add robinhood-trading --transport http https://agent.robinhood.com/mcp/trading
