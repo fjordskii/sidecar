@@ -1,216 +1,124 @@
-# Setting up Sidecar
+# Setup
 
-End to end, roughly 30–45 minutes, most of it waiting on broker approvals.
+~30 minutes, most of it waiting on broker approvals.
 
-The path below is the **reference implementation**: Robinhood + Claude Code + Claude Routines, which
-is what this template was extracted from and what runs live. Substitutions are called out at each
-step — nothing here is load-bearing except "a broker the agent can reach" and "something that fires
-it on a timer."
+Reference path is Robinhood + Claude Code + Claude Routines. Substitutions are noted per step.
 
 ---
 
-## Step 1 — Make your own private copy
+## 1. Private copy
 
-**Use this template → and set the visibility to Private.**
-
-> Your `JOURNAL.md` will accumulate real balances, positions, cost bases, and P&L, cycle after cycle.
-> `PROFILE.md` will contain what you told the interview about your finances. Neither belongs in a
-> public repo, and neither is something you can meaningfully scrub later — git keeps the history.
+**Use this template → set visibility to Private.** `JOURNAL.md` accumulates real balances and
+positions; git history keeps them forever.
 
 ```bash
-git clone https://github.com/<you>/<your-private-repo>.git sidecar
-cd sidecar
+git clone https://github.com/<you>/<your-private-repo>.git sidecar && cd sidecar
 ```
 
-If you cloned this template directly instead of forking it, repoint the remote at your own private
-repo before the loop ever pushes:
+Cloned this template directly instead? Repoint the remote before anything pushes:
+`git remote set-url origin https://github.com/<you>/<your-private-repo>.git`
+
+## 2. Interview
 
 ```bash
-git remote set-url origin https://github.com/<you>/<your-private-repo>.git
+claude
 ```
 
-## Step 2 — Run the setup interview
+Say **"initialize"**. The agent reads `CLAUDE.md`, finds the repo unconfigured, and runs
+`INTERVIEW.md` — 10–15 minutes on your goals, existing portfolio, risk limits, and autonomy. It
+writes `PROFILE.md`, fills in `LOOP_PROMPT.md`, and seeds `JOURNAL.md`.
 
-Open the folder in [Claude Code](https://claude.com/claude-code):
+**Then read `LOOP_PROMPT.md`.** It's plain English and it's what will be spending your money at 7am
+on a Tuesday. If a line doesn't say what you meant, edit it. Highest-leverage ten minutes here.
 
-```bash
-cd sidecar && claude
-```
+> Other agents: say *"Read CLAUDE.md and run the setup interview in INTERVIEW.md."*
 
-Say **"initialize"**, or just describe what you're trying to do. The agent reads `CLAUDE.md`, finds
-the repo unconfigured, and runs the interview in `INTERVIEW.md` — about 10–15 minutes of conversation
-about your goals, your existing portfolio, your risk limits, and how much autonomy you're handing
-over.
+## 3. Broker
 
-It produces:
+**Robinhood:**
 
-- **`PROFILE.md`** — your answers, in your words
-- **`LOOP_PROMPT.md`** — the live mandate, placeholders filled
-- **`JOURNAL.md`** — seeded with your standing rules and a `CYCLE 0` entry
+1. Enable agent trading in the app. Robinhood designates **one specific account** for it — others
+   reject agent orders. Note that account number.
+2. Complete your investment profile. Suitability gates block buys until you do.
+   *(The flag on the accounts endpoint lags and can still read `false` afterward — the order endpoint
+   is authoritative. Test with a small order rather than trusting the flag.)*
+3. Options approval if your mandate uses them. Level 2 = long calls/puts, covered calls, CSPs. Takes
+   a day or two.
+4. Fund it. Small. ACH takes days to settle; until then the loop correctly logs HOLD cycles.
+5. Connect the MCP server:
+   ```bash
+   claude mcp add robinhood-trading --transport http https://agent.robinhood.com/mcp/trading
+   ```
+   OAuth device flow — approve in browser. Verify with `/mcp`. Tool names are **unprefixed**
+   (`get_portfolio`, not `robinhood_get_portfolio`); a wrong allowlist fails silently.
+6. **For cloud routines, add the same server as a connector on claude.ai.** A cloud session cannot
+   see MCP servers you added locally.
 
-**Read `LOOP_PROMPT.md` before going further.** It is the thing that will be spending your money at
-7am on a Tuesday, and it is plain English — if a line doesn't say what you meant, edit it now. This
-is the highest-leverage ten minutes in the whole setup.
-
-> Using Cursor or another agent instead? Same flow — the agent needs to read `CLAUDE.md` and follow
-> `INTERVIEW.md`. If it doesn't pick that up automatically, just say: *"Read CLAUDE.md and run the
-> setup interview in INTERVIEW.md."*
-
-## Step 3 — Connect the broker
-
-### Robinhood (the reference path)
-
-**3a. Get an agent-accessible account.** In the Robinhood app, enable agent trading. Robinhood
-designates a *specific* account for agent access — other accounts will reject agent orders outright,
-so note the account number of the enabled one. That identifier goes in `LOOP_PROMPT.md` and gets
-passed on every single call.
-
-**3b. Complete your investment profile.** Suitability gates block buys until it's filled in, and the
-failure is confusing when you hit it mid-cycle. Do it now.
-
-> One quirk worth knowing: the suitability flag returned by the accounts endpoint *lags*. It can
-> still read `false` after you've completed the profile. The order endpoint is authoritative — if
-> you think you're cleared, place a small test order rather than trusting the flag.
-
-**3c. Options approval,** if your mandate allows options. Level 2 (long calls/puts, covered calls,
-cash-secured puts — no spreads) is what the reference setup runs. Approval takes a day or two.
-
-**3d. Fund it.** Small. Genuinely small. ACH transfers take several days to settle, and until they
-do, buying power may be zero or the funds may be unsettled — the loop will correctly log HOLD cycles
-in the meantime rather than trading with money it doesn't have.
-
-**3e. Connect the MCP server.**
-
-For **local / Claude Code** sessions:
-
-```bash
-claude mcp add robinhood-trading --transport http https://agent.robinhood.com/mcp/trading
-```
-
-This runs an OAuth device flow — approve it in the browser. Verify with `/mcp` inside Claude Code;
-you're looking for tools like `get_portfolio`, `get_equity_positions`, `place_equity_order`. Note the
-tool names are **unprefixed** (`get_portfolio`, not `robinhood_get_portfolio`) — an easy thing to get
-wrong in an allowlist, and a wrong allowlist fails silently as a run that can't trade.
-
-For **cloud routines**, add the same server as a connector in your claude.ai settings so the
-scheduled session inherits it. A cloud session can't see MCP servers you added locally — this is the
-most common reason a routine authenticates fine on your laptop and fails on schedule.
-
-### Another broker
-
-Any MCP server or API exposing quotes, positions, and order placement works. Point `{{MCP_SERVER}}`
-in `LOOP_PROMPT.md` at it and adjust the tool names in the cycle steps to match. Alpaca has both
-paper and live endpoints and is a good place to start. Record anything the broker *can't* do in the
-**Capability gaps** section of `LOOP_PROMPT.md` the day you find it — e.g. the Robinhood agent server
+**Other brokers:** any MCP server or API with quotes, positions, and orders. Point `{{MCP_SERVER}}`
+at it and adjust tool names in `LOOP_PROMPT.md`. Alpaca has paper + live endpoints. Record anything
+the broker *can't* do under **Capability gaps** in `LOOP_PROMPT.md` — e.g. Robinhood's agent server
 has no crypto tools and no news/movers endpoints, so crypto is unavailable in practice and market
-data comes from web search. Undocumented gaps get rediscovered by every future cycle.
+data comes from web search.
 
-## Step 4 — Verify the connection, and prove the order path
+## 4. Verify — both paths
 
-Two separate things, and the second is the one people skip.
+**Read:** *"Call get_accounts, then get_portfolio for &lt;account&gt;. Don't trade."*
 
-**Read path** — in an interactive session:
+**Order:** *"Run a review/preview for a $1 market buy of a liquid ETF. Don't place it."*
 
-> "Call get_accounts, then get_portfolio for account &lt;your account&gt;. Just show me the results,
-> don't trade."
+A clean preview means the pipe is open.
 
-You should see your account, your buying power, your (probably empty) positions.
+> **Why bother:** the loop this came from ran read-only for four days — reasoning well, journaling
+> beautifully, every order silently blocked — until a real trigger fired and got refused. HOLD cycles
+> look exactly like a considered strategy until you learn it was a broken pipe.
 
-**Order path** — this is the important one:
+## 5. One cycle by hand
 
-> "Run a review/preview for a $1 market buy of a liquid ETF in that account. Don't place it — I want
-> to confirm the order endpoint responds."
+*"Run one full cycle now, exactly as LOOP_PROMPT.md describes."*
 
-A clean preview with no rejections means the pipe is open.
+Then **read the entry it wrote.** Does the reasoning sound like something you'd endorse? Did it
+respect your limits? Did the cross-sector scan actually look, or hand-wave?
 
-> **Why this matters.** In the setup this template came from, the loop ran **read-only for four
-> days** — pulling data, reasoning well, journaling beautifully, and having every order silently
-> blocked by a safety classifier in the session it happened to be running in. Nobody noticed until a
-> real trigger fired and the order was refused. A string of HOLD cycles looks exactly like a
-> considered strategy right up until you learn it was a broken pipe. Prove the order path before you
-> schedule anything, and have every cycle note whether it still works.
+If no, fix `LOOP_PROMPT.md`, not the agent. Two or three rounds is normal — you're debugging in
+English before there's a schedule or real size.
 
-## Step 5 — Run one cycle by hand
+## 6. Schedule
 
-Before any schedule exists:
+Prompt + full config: **[`ops/ROUTINE_PROMPT.md`](ops/ROUTINE_PROMPT.md)**.
 
-> "Run one full cycle now, exactly as LOOP_PROMPT.md describes."
+**Cloud routine (recommended).** Nothing on your machine; your laptop can be shut.
+[claude.ai/code/routines](https://claude.ai/code/routines) → new routine → point it at your private
+repo → paste the filled prompt → set tools, connector, and cron per `ops/ROUTINE_PROMPT.md` →
+**trigger once manually** and read the resulting entry and commit.
 
-Then **read the journal entry it wrote.** This is your real acceptance test, and it's a judgment
-call, not a checklist — does the reasoning sound like something you'd endorse? Did it respect your
-limits? Did the cross-sector scan actually look, or did it hand-wave? Would you have made this trade?
+**Local.** `ops/` ships a `launchd` setup — see [`ops/README.md`](ops/README.md). Works, fully under
+your control, stops when your laptop sleeps.
 
-If the answer is no, the fix is almost always in `LOOP_PROMPT.md`, not in the agent. Edit the
-mandate, run another cycle, repeat. Two or three rounds here is normal and is time extremely well
-spent — you are debugging in English, before there's a schedule and before there's real size.
+**Anything else.** Cursor background agents, GitHub Actions on a `schedule`. Same prompt.
 
-## Step 6 — Schedule it
+Cadence: 3×/weekday (open, midday, pre-close) is the reference. Once daily is fine. More mostly buys
+churn.
 
-The prompt you paste into any scheduler is templated in **[`ops/ROUTINE_PROMPT.md`](ops/ROUTINE_PROMPT.md)**
-— fill its placeholders and use it verbatim.
+> ⚠️ **Exactly one order-capable scheduler.** Two runners share one journal with no lock. Migrating
+> from local to cloud? Disable the local job the same day.
 
-### Option A — Cloud routine (recommended)
+## 7. Living with it
 
-Nothing runs on your machine. Your laptop can be shut. This is what the reference setup migrated to
-and it removed an entire category of problems.
+**Read the journal** — regularly, especially after a bad week. You have a dated record of what your
+agent believed and why, which is more than most people have about their own trading.
 
-1. Go to **[claude.ai/code/routines](https://claude.ai/code/routines)** and create a routine.
-2. Point it at your private repo — it clones fresh each run.
-3. Paste your filled-in routine prompt.
-4. Set the schedule. Reference cadence is 3× per weekday, near the open, midday, and before the
-   close. Once daily is fine. More than 3× mostly buys churn.
-5. Confirm the broker connector is enabled for cloud sessions (Step 3e).
-6. **Trigger it once manually** and read the resulting journal entry and commit.
-
-> ⚠️ **DST drift.** Cloud cron is usually fixed **UTC** while market hours are **ET**. A cron set
-> during EDT (UTC−4) fires an hour early once EST begins — and the spring/fall shift can move your
-> first slot to *before the market opens*, which turns your best cycle of the day into a no-op.
-> Set a calendar reminder for the changeover to shift the hours. Example: `30 13,16,19 * * 1-5`
-> (9:30/12:30/15:30 EDT) becomes `30 14,17,20 * * 1-5` under EST.
-
-### Option B — Local scheduler
-
-`ops/` ships a working `launchd` setup: [`run.sh`](ops/run.sh) and a plist example. See
-[`ops/README.md`](ops/README.md) for the install steps, the `cron` equivalent, and the trade-offs.
-
-Short version: it works, it's fully under your control, and it stops the moment your laptop sleeps.
-
-### Option C — Anything else
-
-Cursor background agents, GitHub Actions on a `schedule` trigger, any hosted agent platform with a
-timer. Same prompt; only the trigger changes. For CI, remember the checkout is detached — keep the
-explicit push refspec.
-
-> ⚠️ **Run exactly one order-capable scheduler.** Two runners sharing one journal will both wake on
-> the same catalyst and both spend the same buying power. There's no lock. If you migrate from local
-> to cloud, *disable the local job in the same sitting* — this bit the reference setup and it's the
-> kind of bug that shows up as a mysterious duplicate position.
-
-## Step 7 — Living with it
-
-**Read the journal.** Not every entry, but regularly, and especially after a losing week. It's the
-whole point: you have a dated record of what your agent believed and why, which is more than most
-people have about their own trading.
-
-**Amend the mandate when you disagree.** Tell the agent in a session — *"stop buying anything within
-two weeks of an earnings print"* — and have it edit `LOOP_PROMPT.md` and commit. Dated amendments,
-superseded reasoning left visible. This is the intended way to steer the loop; arguing with a single
-cycle isn't, because the next cycle won't remember it.
-
-**Watch for these failure modes.** They're the ones that actually show up:
+**Amend the mandate** when you disagree: *"stop buying within two weeks of an earnings print"* →
+agent edits `LOOP_PROMPT.md` and commits. Arguing with a single cycle doesn't work; the next one
+won't remember.
 
 | Symptom | Usually means |
 |---|---|
-| Every cycle is HOLD | Broken order path, or a mandate so tight nothing can clear it. Check the preview call first. |
-| Every candidate is in one theme | The cross-sector scan has become a ritual. Tighten the entry test into something that can actually fire. |
-| It trades every cycle | The mandate rewards activity. Add an explicit "no quota, holding is success" line, or reduce the cadence. |
-| Journal entries stop appearing | Push failures. Check the remote SHA, not the local log. |
+| Every cycle HOLDs | Broken order path, or limits nothing can clear. Check the preview call. |
+| Every candidate is one theme | The cross-sector scan became a ritual. Tighten the entry test so it can actually fire. |
+| It trades constantly | Mandate rewards activity. Add "no quota, holding is success", or cut the cadence. |
+| Entries stop appearing | Push failures. Check the remote SHA, not the local log. |
 | Duplicate positions | Two schedulers. Kill one. |
 
-**Rotate the journal** when it passes ~250KB — the agent will do it if you ask, or on its own per the
-mandate.
-
-**Re-evaluate on your benchmark.** You set one in the interview. Actually check it. The honest
-question is whether this sleeve beats what the same dollars would have done sitting in an index fund
-— and if it doesn't over a few months, shrink it or shut it off. Being able to answer that is worth
-more than the sleeve.
+**Check your benchmark.** You set one in the interview — actually use it. If the sleeve can't beat
+what the same dollars would've done in an index fund over a few months, shrink it or shut it off.
+Being able to answer that is worth more than the sleeve.

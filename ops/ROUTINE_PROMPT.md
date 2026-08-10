@@ -1,106 +1,106 @@
 # The routine prompt
 
-This is the text you paste into your scheduler — the thing that actually fires on a timer and wakes
-the agent up. Everything else in this repo is read *by* the session this prompt starts.
+What you paste into your scheduler. Everything else in the repo is read *by* the session it starts.
 
-Keep it short. It is a **pointer, not a strategy.** Its whole job is: identify the account, name the
-two files that are the source of truth, and hand off. Strategy lives in `LOOP_PROMPT.md`, where it
-can be amended by any cycle and version-controlled. A routine prompt that duplicates strategy will
-drift out of sync with the mandate within a week, and then you have two mandates that disagree and no
-way to tell which one a given cycle followed.
+Keep it a **pointer, not a strategy.** Strategy lives in `LOOP_PROMPT.md` where it's version-controlled
+and any cycle can amend it. Duplicate it here and within a week you have two mandates that disagree
+and no way to tell which one a cycle followed.
 
 ---
 
-## Template — copy, fill the `{{PLACEHOLDERS}}`, paste into your scheduler
+## The prompt
+
+Fill the `{{PLACEHOLDERS}}`, paste verbatim.
 
 ```text
-Scheduled cycle of the {{BROKER}} account {{ACCOUNT_ID}}. You are ONE run of a shared,
-continuous trading loop — not a standalone bot with its own mandate. Everything you need is
-in the repo {{REPO_URL}}.
+Scheduled CLOUD routine cycle of the {{BROKER}} account {{ACCOUNT_ID}}. You are ONE run of a
+shared, continuous trading loop — not a separate bot with its own mandate. You share repo
+state with any interactive session that may also touch this account.
 
-Source of truth — read both, in this order:
-  1. Mandate/spec: LOOP_PROMPT.md
-  2. Memory/journal: JOURNAL.md — tail it (~15KB), do not read the whole file. The most
-     recent CYCLE entry is the current thesis and carries standing triggers left for you by
-     the previous cycle. Honor them.
+Source of truth (read both, in order, from the repo root):
+  1. Spec/mandate: LOOP_PROMPT.md
+  2. Memory/journal: JOURNAL.md — tail it (do not read the whole file); the most recent
+     CYCLE entry is the current thesis + standing rules. Honor any triggers it left you.
 
-Then execute the cycle EXACTLY as LOOP_PROMPT.md describes: verify session, pull live
-portfolio/positions/open orders, gather news and run the cross-sector scan, form a thesis,
-and act within the mandate's hard limits. Trust the live broker API over anything in the
-files — another runner may have traded since the last entry. Preview orders before placing
-when sizing is unclear. Spend available buying power only; never deposit or self-fund. If
-the market is closed, or buying power is ~$0 with nothing to manage, log a brief HOLD cycle
-and stop cleanly.
+Then execute the loop EXACTLY as LOOP_PROMPT.md describes: check session / portfolio /
+positions / open orders via the {{MCP_SERVER}} MCP server, gather news + cross-sector movers
+via WebSearch, form a thesis, and act under the mandate. {{AUTONOMY_LINE}} Trust the live
+broker API over the journal file for positions and cash — another runner may have traded
+since the journal was last written. Preview orders (review_* tools) before placing. Only
+spend SETTLED buying power; never deposit or self-fund. If the market is closed (weekend or
+holiday) or buying power is ~$0 with nothing to manage, log a brief HOLD cycle and stop — do
+not error out.
 
-{{AUTONOMY_LINE}}
+Identify yourself in the journal entry as a CLOUD-ROUTINE cycle (distinct from any 'local' or
+'interactive' entries already in the journal) and note which daily slot this is
+({{SLOTS}}).
 
-Finish by APPENDING a new dated ## CYCLE entry to JOURNAL.md in the exact format given in
-LOOP_PROMPT.md, then commit and push. You are in a fresh clone and likely on a DETACHED
-HEAD, so push with an explicit refspec — `git push origin HEAD:refs/heads/main` — and
-verify with `git ls-remote --heads origin` that the remote SHA matches `git rev-parse HEAD`.
-A commit that fails to push is a silent data-loss bug, not a cosmetic warning.
+Finish by APPENDING a new dated ## CYCLE entry to JOURNAL.md (format in LOOP_PROMPT.md), then
+commit and push — a change that isn't pushed doesn't exist. You are in a FRESH CLONE and
+therefore on a DETACHED HEAD, where a plain `git push` fails *after* the commit succeeds, so
+push with an explicit refspec and verify:
+  git add -A && git commit -m "cycle: <date/time> (cloud routine, <slot>)"
+  git push origin HEAD:refs/heads/main
+  git ls-remote --heads origin   # SHA must match `git rev-parse HEAD`
 
 End with a one-paragraph summary of what you did and why.
 ```
 
-## Filling it in
-
-| Placeholder | What goes there |
+| Placeholder | Example |
 |---|---|
-| `{{BROKER}}` | `Robinhood`, `Alpaca`, etc. |
-| `{{ACCOUNT_ID}}` | The exact account identifier every order must carry. |
-| `{{REPO_URL}}` | Your **private** repo URL. The routine clones this fresh each run. |
-| `{{AUTONOMY_LINE}}` | One sentence, from the table below. |
+| `{{BROKER}}` · `{{ACCOUNT_ID}}` | `Robinhood` · the exact account identifier every order carries |
+| `{{MCP_SERVER}}` | `robinhood-trading` |
+| `{{SLOTS}}` | `9:30 / 12:30 / 15:30 ET` |
+| `{{AUTONOMY_LINE}}` | one line, below |
 
-**`{{AUTONOMY_LINE}}` — pick one, matching what the interview set in `LOOP_PROMPT.md`:**
+**`{{AUTONOMY_LINE}}` — match what the interview set in `LOOP_PROMPT.md`:**
 
-- *Full autonomy:*
-  `FULL AUTONOMY — place orders without asking for confirmation. There is no human in this session to approve anything; a cycle that stops to ask has failed to run.`
-- *Propose-only:*
-  `PROPOSE-ONLY — do NOT place any order. Analyze fully, state the exact order you would place (symbol, side, size, order type), journal it, and leave it for the owner to execute manually.`
-- *Mixed:*
-  `Place orders up to {{THRESHOLD}} without confirmation. Above that, do NOT place — journal the proposed order in full and leave it for the owner.`
+- **Full** — `FULL AUTONOMY — no user confirmation needed for any trade.`
+- **Propose-only** — `PROPOSE-ONLY — place NO orders. State the exact order you would place, journal it, leave it for the owner.`
+- **Mixed** — `Place orders up to {{THRESHOLD}} without confirmation; above that, journal the proposed order and leave it.`
 
-That autonomy line is the single most consequential sentence in the prompt. In an unattended cloud
-session there is nobody to answer a confirmation request, so an agent that pauses to ask simply
-stalls and the cycle produces nothing. Say explicitly which mode you're in.
+There's nobody in a scheduled session to answer a confirmation prompt, so an agent that pauses to ask
+just stalls and the cycle produces nothing. Be explicit.
 
-## Notes for specific schedulers
+## The rest of the config
 
-**Claude Routines** (`claude.ai/code/routines` — the reference setup)
-Paste the filled template as the routine's prompt and point it at your repo; it clones fresh, runs in
-an isolated cloud session, and pushes its own commit. Nothing runs on your machine and no terminal
-stays open. Set the cron in **UTC** and see the DST warning in [README.md](README.md) — a fixed-UTC
-cron drifts an hour against market hours twice a year, and the spring shift can move your first slot
-to *before the open*.
+The prompt is half of it. These fields decide whether the run can actually *do* anything:
 
-**Headless CLI on a local timer** (`launchd`, `cron`)
-The same text becomes the `PROMPT` variable in [`run.sh`](run.sh) — it's already there, with the same
-placeholders. Since a local run works in a persistent checkout rather than a fresh clone, it's on a
-normal branch and a plain `git push` works; the detached-HEAD paragraph is harmless but unnecessary,
-and `run.sh` handles the push itself.
+| Field | Value | Why |
+|---|---|---|
+| **Repo source** | your private repo URL | Cloned fresh each run — this is how it gets the mandate and journal. |
+| **Allowed tools** | `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `WebSearch`, `WebFetch`, `mcp__{{MCP_SERVER}}` | **`Bash` is required** — without it there's no `git push`, so the cycle runs, trades, and loses its journal entry. `WebSearch` is required if your broker has no news/movers endpoint. |
+| **MCP connector** | your broker server, attached to the routine | A cloud session cannot see MCP servers you added locally. This is the #1 reason a routine works on your laptop and fails on schedule. |
+| **Model** | a frontier model | This is judgment work on real money. |
+| **Cron** | `30 13,16,19 * * 1-5` = 9:30/12:30/15:30 ET **during EDT** | See DST below. |
+| **Persist session** | off | Every cycle should start cold from the repo. State lives in the journal, not in a session. |
 
-**GitHub Actions / other CI**
-Same prompt, passed to an agent CLI in the workflow. The checkout is detached there too, so keep the
-explicit refspec. The job needs write permissions on the repo and your broker credentials in secrets.
+> ⚠️ **DST drift.** Cloud cron is fixed **UTC**; market hours are **ET**. A cron set during EDT fires
+> an hour early once EST starts — which can move your first slot to *before the open*. Under EST the
+> example becomes `30 14,17,20 * * 1-5`. Set a calendar reminder for the changeover.
 
-**Anything else with a timer**
-Any platform that can run an agent on a schedule with tool access works. The prompt doesn't change —
-only the mechanism that fires it.
+## Other schedulers
 
-## Testing it
+Same prompt, different trigger.
 
-Before trusting a schedule, run the exact prompt once by hand — in an interactive session, or by
-triggering the routine manually. You are checking four things, in order:
+- **Local `launchd`/`cron`** — it's already in [`run.sh`](run.sh). A persistent checkout sits on a
+  real branch, so a plain `git push` works and the detached-HEAD refspec is unnecessary.
+- **GitHub Actions** — checkout is detached, so keep the refspec. Needs write permission and broker
+  credentials in secrets.
+
+> ⚠️ **Exactly one order-capable scheduler.** Two runners share one journal with no lock — both wake
+> on the same catalyst and spend the same buying power. Migrating? Disable the old one the same day.
+
+## Test it before you trust it
+
+Trigger the routine manually once and check, in order:
 
 1. It authenticates to the broker.
-2. It reads the journal and picks up the current thesis.
-3. It can place an order — verify with a *review*/preview call even on a HOLD cycle, so a plumbing
-   failure can never masquerade as a thesis decision.
-4. **The push lands.** Check the remote, not just the local log.
+2. It reads the journal and picks up the thesis.
+3. **The order path works** — verify via a review/preview call even on a HOLD cycle.
+4. **The push landed** — check the remote SHA, not the local log.
 
-Point 3 is not paranoia. In the setup this template came from, the loop ran read-only for four days —
-analyzing and journaling perfectly while every order was silently blocked — and nobody noticed until
-a real trigger fired and the order was refused. Every cycle should note in its journal whether the
-order path actually worked, rather than letting a string of HOLD entries look like a strategy when
-it's a broken pipe.
+Point 3 isn't paranoia. The loop this came from ran **read-only for four days** — reasoning well,
+journaling beautifully, every order silently blocked — and nobody noticed until a real trigger fired
+and got refused. A run of HOLD entries looks exactly like a considered strategy until you learn it was
+a broken pipe. Have every cycle state whether the order path worked.

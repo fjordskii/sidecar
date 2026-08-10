@@ -49,6 +49,9 @@ stop cleanly.
 
 {{AUTONOMY_LINE}}
 
+Identify yourself in the journal entry as a LOCAL cycle (distinct from any 'cloud routine' or
+'interactive' entries already in the journal) and note which daily slot this is.
+
 Finish by APPENDING a new dated ## CYCLE entry to ${REPO}/JOURNAL.md in the exact format
 given in LOOP_PROMPT.md. End with a one-paragraph summary of what you did and why."
 
