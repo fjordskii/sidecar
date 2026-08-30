@@ -29,9 +29,13 @@ Log a HOLD and stop. Doing nothing is a valid, journaled outcome.
 
 ## Setup
 
-**The easy way: [sidecar.trade](https://sidecar.trade)** — a guided wizard that creates your
-private repo, walks you through the mandate, and hands you the scheduler config. Three clicks
-plus one paste.
+**The easy way: [sidecar.trade](https://sidecar.trade)** — a guided setup that creates your
+private repo and hands you the scheduler prompt. Three clicks plus one paste, zero questions:
+the routine's first run initializes the repo itself (fetches your Robinhood account number,
+writes a safe mandate that proposes trades but places none). Personalize later by just talking
+to it — say **"initialize"** in an interactive session and it interviews you about goals, risk
+limits, and autonomy. Prefer to write the rules up front? The setup's customize path is a
+10-minute form that writes them before launch.
 
 The manual way:
 

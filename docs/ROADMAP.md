@@ -16,7 +16,7 @@ systems, and onboarding should sell that, not git.
 | Decision | Choice | Rationale |
 |---|---|---|
 | Setup architecture | Hosted wizard with GitHub OAuth (Vercel, Next.js) | Automates repo creation + config commit; no DB, token lives only for the flow |
-| Interview format | Guided form now; the user's own agent offers to refine the mandate on its first interactive run | Deterministic, no LLM backend cost; polish step reuses the product itself |
+| Interview format | Zero questions up front: auto-init (v1.5.0) writes safe propose-only defaults on the routine's first run; the form survives as an optional customize path; the agent interviews to personalize | Normies should never face a form; the mandate starts safe and personalizes in conversation |
 | Versioning | Staged: manifest + automated update PRs first; user/system file split as format v2 later | Rail works for current users today; v2 migrates through the rail |
 | Existing users | Mixed cloud/local, exact split unknown | Migration path must auto-detect scheduler type |
 | Internal architecture | Soft state machine (deterministic gates, probabilistic judgment) — NOT a full code runner | See analysis below |
@@ -26,7 +26,7 @@ systems, and onboarding should sell that, not git.
 | Setup step (SETUP.md) | Automatable? |
 |---|---|
 | Create private repo from template | Yes — GitHub OAuth + template generation API |
-| Interview → PROFILE.md / LOOP_PROMPT.md / JOURNAL.md / ops/ | Yes — guided form, committed to the repo via API |
+| Interview → PROFILE.md / LOOP_PROMPT.md / JOURNAL.md / ops/ | Yes — two ways: routine auto-init from schema defaults (no questions), or the wizard's customize form committed via API |
 | Robinhood OAuth + MCP connector | Partially — deep links + prefilled steps; the OAuth approval is inherently theirs |
 | Create the Claude Routine | No public Routines API [verify before build] — best possible: prefilled copy block + per-field checklist + deep link |
 

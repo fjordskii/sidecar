@@ -30,17 +30,31 @@ Mechanical setup only; zero judgment calls. Do all of it, then stop:
 2. **Account ID** — find the account designated for agent trading in that response. That identifier
    fills every account field below. If several or none are designated, stop and say so in the entry.
 3. **Live capital** — pull the portfolio for that account; current equity is the starting capital.
-4. **Write the setup files from `setup-schema.json` defaults**, never from invention:
-   - `PROFILE.md` — every value, each marked `(default — not yet confirmed)`
+4. **Write the setup files from `setup-schema.json` defaults**, never from invention. Three tokens
+   have no schema default; use exactly these sources:
+   - `ACCOUNT_ID` — step 2.
+   - `STRATEGY` — "Hold what exists and open nothing new until the owner personalizes this mandate."
+   - `KILL_SWITCH` (lands in the never-allowed list) — "any order the owner did not expect: halt and
+     ask before trading again."
+   Live values beat defaults: starting capital from step 3, not the schema's "unspecified" string.
+   Files:
+   - `PROFILE.md` — every value, each marked `(default — not yet confirmed)` except the two live
+     fetches (account ID, starting capital), which are confirmed by the API itself.
    - `LOOP_PROMPT.md` — placeholders filled from schema defaults; broker Robinhood, account ID from
      step 2, LIVE mode, **PROPOSE-ONLY autonomy**. Never auto-init to full autonomy; that upgrade is
-     a human decision made in an interactive session.
+     a human decision made in an interactive session. If a value has no schema default and no live
+     source, delete its section or line outright rather than writing a stub; a cold agent will try
+     to satisfy a stub. (Auto-init keeps the cross-sector scan default and the not-to-duplicate
+     list, and drops the optional outside-account check.)
    - `JOURNAL.md` — standing rules from the hard limits, plus a CYCLE 0 entry noting this was an
      automated init.
-5. **Prove the order path** with one review/preview call. No order is placed; autonomy is
+5. **Completion gate** — grep the three files for `{{`: no `{{TOKEN}}` may survive. (Exempt: the
+   word PLACEHOLDER in `run.sh` prose and its local-only `{{CLI_PATH}}`/`{{NODE_PATH}}`/`{{REPO_PATH}}`,
+   which only a local scheduler fills.)
+6. **Prove the order path** with one review/preview call. No order is placed; autonomy is
    propose-only regardless.
-6. **Commit and push everything** (detached-HEAD refspec if applicable), verify the remote SHA.
-7. **End the entry with a note to the owner**: open this repo in an interactive session and say
+7. **Commit and push everything** (detached-HEAD refspec if applicable), verify the remote SHA.
+8. **End the entry with a note to the owner**: open this repo in an interactive session and say
    "initialize" to personalize the mandate. The loop proposes but never trades until then.
 
 **INITIALIZED** — `LOOP_PROMPT.md` is the source of truth. Read it, then read the end of `JOURNAL.md`

@@ -74,12 +74,8 @@ The prompt is half of it. These fields decide whether the run can actually *do* 
 | **Allowed tools** | `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `WebSearch`, `WebFetch`, `mcp__{{MCP_SERVER}}` | **`Bash` is required** — without it there's no `git push`, so the cycle runs, trades, and loses its journal entry. `WebSearch` is required if your broker has no news/movers endpoint. |
 | **MCP connector** | your broker server, attached to the routine | A cloud session cannot see MCP servers you added locally. This is the #1 reason a routine works on your laptop and fails on schedule. |
 | **Model** | a frontier model | This is judgment work on real money. |
-| **Cron** | `30 13,16,19 * * 1-5` = 9:30/12:30/15:30 ET **during EDT** | See DST below. |
+| **Schedule** | **weekdays** preset at 9:30 your local time | Times are entered in your local zone and converted automatically; no DST math. For the full 9:30 / 12:30 / 15:30 cadence, run `/schedule update` in the Claude Code CLI with `30 9,12,15 * * 1-5`. |
 | **Persist session** | off | Every cycle should start cold from the repo. State lives in the journal, not in a session. |
-
-> ⚠️ **DST drift.** Cloud cron is fixed **UTC**; market hours are **ET**. A cron set during EDT fires
-> an hour early once EST starts — which can move your first slot to *before the open*. Under EST the
-> example becomes `30 14,17,20 * * 1-5`. Set a calendar reminder for the changeover.
 
 ## Other schedulers
 

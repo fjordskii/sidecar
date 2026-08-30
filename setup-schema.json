@@ -270,9 +270,9 @@
           "default": "3x per weekday (open, midday, pre-close)",
           "maps_to": ["CADENCE"],
           "options": [
-            { "value": "3x per weekday (open, midday, pre-close)", "label": "3× per weekday", "description": "Reference cadence.", "derives": { "SLOTS": "9:30 / 12:30 / 15:30 ET", "CRON_UTC_EDT": "30 13,16,19 * * 1-5", "CRON_UTC_EST": "30 14,17,20 * * 1-5" } },
-            { "value": "once per weekday", "label": "Once daily", "derives": { "SLOTS": "9:45 ET", "CRON_UTC_EDT": "45 13 * * 1-5", "CRON_UTC_EST": "45 14 * * 1-5" } },
-            { "value": "weekly", "label": "Weekly", "description": "Legitimate for a long-horizon mandate.", "derives": { "SLOTS": "Mondays 9:45 ET", "CRON_UTC_EDT": "45 13 * * 1", "CRON_UTC_EST": "45 14 * * 1" } }
+            { "value": "3x per weekday (open, midday, pre-close)", "label": "3× per weekday", "description": "Reference cadence.", "derives": { "SLOTS": "9:30 / 12:30 / 15:30 ET" } },
+            { "value": "once per weekday", "label": "Once daily", "derives": { "SLOTS": "9:45 ET" } },
+            { "value": "weekly", "label": "Weekly", "description": "Legitimate for a long-horizon mandate.", "derives": { "SLOTS": "Mondays 9:45 ET" } }
           ]
         },
         {
