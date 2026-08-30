@@ -12,6 +12,7 @@
     {
       "id": 0,
       "title": "Frame it",
+      "intro": "This runs an AI agent against a real brokerage account on a schedule. Once live, it places real orders without asking first, on days you've forgotten about it. That's the design; everything below makes sure it happens inside limits you actually chose.",
       "fields": [
         {
           "key": "live_or_paper",
@@ -37,6 +38,7 @@
     {
       "id": 1,
       "title": "The account",
+      "intro": "Grab your phone for this one. In the Robinhood app: enable agent trading, complete your investment profile (buys block until you do), and find your account number under the account icon, then the menu, then Settings. Robinhood designates ONE account for agent trading when you enable it; use that account's number below.",
       "fields": [
         {
           "key": "broker",
