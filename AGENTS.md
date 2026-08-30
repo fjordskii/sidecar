@@ -12,9 +12,36 @@ test -f PROFILE.md && ! grep -qE '\{\{(ACCOUNT_ID|BROKER|STRATEGY|AUTONOMY)\}\}'
 `{{PLACEHOLDER}}` in prose, which is not an unfilled token.)
 
 **NOT_INITIALIZED** — fresh clone, nothing configured. Do not trade, do not run a cycle, do not guess
-at a strategy. Greet them, explain in two sentences what this repo is, and offer to run the setup
-interview. If they agree — or opened the repo asking to set it up — follow **[INTERVIEW.md](INTERVIEW.md)**
-exactly. It's a conversation, not a form. Touch nothing else during init.
+at a strategy. Which init path depends on what you are:
+
+- **Interactive session** (a human is talking to you): greet them, explain in two sentences what this
+  repo is, and offer to run the setup interview. If they agree — or opened the repo asking to set it
+  up — follow **[INTERVIEW.md](INTERVIEW.md)** exactly. It's a conversation, not a form. Touch nothing
+  else during init.
+- **Non-interactive runner** (a scheduled routine with nobody to talk to): run **auto-init**, below,
+  then stop. Never attempt the interview; there is no one to answer.
+
+### Auto-init (non-interactive runner, NOT_INITIALIZED)
+
+Mechanical setup only; zero judgment calls. Do all of it, then stop:
+
+1. **Verify broker auth** — call the accounts endpoint (Robinhood: `get_accounts`). On failure,
+   append a `SKIPPED — not authenticated` entry and stop cleanly.
+2. **Account ID** — find the account designated for agent trading in that response. That identifier
+   fills every account field below. If several or none are designated, stop and say so in the entry.
+3. **Live capital** — pull the portfolio for that account; current equity is the starting capital.
+4. **Write the setup files from `setup-schema.json` defaults**, never from invention:
+   - `PROFILE.md` — every value, each marked `(default — not yet confirmed)`
+   - `LOOP_PROMPT.md` — placeholders filled from schema defaults; broker Robinhood, account ID from
+     step 2, LIVE mode, **PROPOSE-ONLY autonomy**. Never auto-init to full autonomy; that upgrade is
+     a human decision made in an interactive session.
+   - `JOURNAL.md` — standing rules from the hard limits, plus a CYCLE 0 entry noting this was an
+     automated init.
+5. **Prove the order path** with one review/preview call. No order is placed; autonomy is
+   propose-only regardless.
+6. **Commit and push everything** (detached-HEAD refspec if applicable), verify the remote SHA.
+7. **End the entry with a note to the owner**: open this repo in an interactive session and say
+   "initialize" to personalize the mandate. The loop proposes but never trades until then.
 
 **INITIALIZED** — `LOOP_PROMPT.md` is the source of truth. Read it, then read the end of `JOURNAL.md`
 for the current thesis. Follow the mandate as written.
