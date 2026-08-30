@@ -124,3 +124,29 @@ won't remember.
 **Check your benchmark.** You set one in the interview — actually use it. If the sleeve can't beat
 what the same dollars would've done in an index fund over a few months, shrink it or shut it off.
 Being able to answer that is worth more than the sleeve.
+
+## 8. Upgrading
+
+The template keeps improving; your copy doesn't have to fall behind. Each repo carries
+[`.github/workflows/sidecar-update.yml`](.github/workflows/sidecar-update.yml): weekly (or
+**Actions → Sidecar update → Run workflow**) it compares your `VERSION` against the template's
+and opens a PR with the template-owned changes. Merge it like any PR.
+
+What it touches is declared in [`sidecar-manifest.json`](sidecar-manifest.json):
+
+- **System files** (`CLAUDE.md`, `SETUP.md`, ops scripts, the rail itself) — updated.
+- **Files the interview filled in** (`LOOP_PROMPT.md`, `JOURNAL.md`, `ops/run.sh`) — updated
+  *only* while they still contain `{{PLACEHOLDER}}` markers. Once they're yours, they're
+  skipped and named in the PR body.
+- **Your files** (`PROFILE.md`, archives, logs) — never read, never touched.
+
+Two known limits: a workflow can't update workflow files, so when the rail itself changes the
+PR body asks you to copy that one file by hand. And GitHub disables scheduled workflows after
+60 days of repo inactivity — live loops commit constantly so this only matters for paused
+loops; run it manually when you come back.
+
+**Cloned before the rail existed?** One-time install: copy
+[`.github/workflows/sidecar-update.yml`](https://github.com/fjordskii/sidecar/blob/main/.github/workflows/sidecar-update.yml)
+into your repo at the same path (GitHub web UI → Add file works fine). The first run treats
+your repo as v0.0.0 and opens a PR backfilling `VERSION` and the manifest — your initialized
+files are skipped by the placeholder rule, so nothing you've personalized changes.

@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "purpose": "Single source of truth for Sidecar setup. The onboarding wizard renders this as a form; INTERVIEW.md covers the same fields conversationally. Both write the same files. If you add a {{PLACEHOLDER}} anywhere in LOOP_PROMPT.md, JOURNAL.md, or ops/, add its field here.",
+  "conventions": {
+    "maps_to": "Template placeholders this field fills. One field may fill several files.",
+    "derived": "Computed from other fields or the environment — never asked of the user.",
+    "delete_if_empty": "Sections that must be removed outright (heading and all) when the field is empty — a cold agent will try to satisfy a stub.",
+    "default_marker": "Defaults are written into output files with this suffix so the user knows to confirm them.",
+    "default_marker_value": "(default — not yet confirmed)"
+  },
+  "rounds": [
+    {
+      "id": 0,
+      "title": "Frame it",
+      "fields": [
+        {
+          "key": "live_or_paper",
+          "label": "Live money or paper?",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["LIVE_OR_PAPER"],
+          "options": [
+            { "value": "LIVE — real orders, real money", "label": "Live", "description": "Real orders from the first trade. Robinhood has no paper environment." },
+            { "value": "PAPER — simulated orders", "label": "Paper", "description": "Only if your broker offers a paper endpoint (e.g. Alpaca)." }
+          ]
+        },
+        {
+          "key": "kill_switch",
+          "label": "What would make you shut it off?",
+          "help": "Worth more than any risk questionnaire. 'If it lost half', 'if it bought meme stocks', 'if it traded every day' — whatever you'd actually say. Becomes a hard constraint.",
+          "type": "longtext",
+          "required": true,
+          "maps_to": ["NEVER_ALLOWED"]
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "title": "The account",
+      "fields": [
+        {
+          "key": "broker",
+          "label": "Broker",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["BROKER"],
+          "options": [
+            { "value": "Robinhood", "label": "Robinhood", "description": "Reference path. Agent trading enabled in the app; one designated account.", "derives": { "MCP_SERVER": "robinhood-trading" } },
+            { "value": "Alpaca", "label": "Alpaca", "description": "Has paper + live endpoints.", "derives": { "MCP_SERVER": "alpaca" } },
+            { "value": "other", "label": "Other", "description": "Any broker with an MCP server or API covering quotes, positions, orders.", "derives": { "MCP_SERVER": null } }
+          ]
+        },
+        { "key": "mcp_server", "label": "MCP server name", "type": "text", "required": true, "maps_to": ["MCP_SERVER"], "derived_from": "broker", "note": "Auto-filled from broker; editable for 'other'. Tool names are unprefixed on Robinhood." },
+        { "key": "account_id", "label": "Account identifier", "help": "The exact account number or ID. Robinhood designates ONE account for agent trading — get this right; every read and order carries it.", "type": "text", "required": true, "maps_to": ["ACCOUNT_ID"], "sensitive": true },
+        {
+          "key": "account_tax_status",
+          "label": "Taxable or tax-advantaged?",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["ACCOUNT_TAX_STATUS"],
+          "options": [
+            { "value": "taxable", "label": "Taxable", "description": "Short-term gains and wash-sale exposure apply." },
+            { "value": "tax-advantaged", "label": "Tax-advantaged (IRA etc.)", "description": "No wash-sale or short-term-gain concerns inside the account." }
+          ]
+        },
+        { "key": "starting_capital", "label": "Starting capital", "help": "Rough is fine. The loop reads live buying power every cycle regardless.", "type": "text", "required": true, "maps_to": ["STARTING_CAPITAL"] },
+        {
+          "key": "funding_cadence",
+          "label": "Will you add money regularly?",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["FUNDING_CADENCE"],
+          "options": [
+            { "value": "lump sum, no recurring funding", "label": "One lump sum" },
+            { "value": "recurring weekly deposits", "label": "Weekly" },
+            { "value": "recurring monthly deposits", "label": "Monthly" }
+          ]
+        },
+        {
+          "key": "instruments",
+          "label": "What can it trade?",
+          "type": "multi",
+          "required": true,
+          "maps_to": ["INSTRUMENTS"],
+          "options": [
+            { "value": "stocks", "label": "Stocks" },
+            { "value": "ETFs", "label": "ETFs" },
+            { "value": "options (long calls/puts, covered calls, CSPs)", "label": "Options (level 2)" },
+            { "value": "crypto", "label": "Crypto", "description": "Note: Robinhood's agent server has no crypto tools — allowed strategically, unavailable operationally." }
+          ]
+        },
+        { "key": "options_level", "label": "Options approval level", "type": "text", "required": false, "maps_to": ["OPTIONS_LEVEL"], "show_if": { "instruments": "options (long calls/puts, covered calls, CSPs)" }, "note": "Rendered empty (omitted) when options are not in instruments." }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "What this account is for",
+      "fields": [
+        {
+          "key": "sleeve_role",
+          "label": "Is there a portfolio outside this account?",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["SLEEVE_ROLE"],
+          "options": [
+            { "value": "satellite sleeve alongside an existing core portfolio", "label": "Yes — this is a sidecar", "description": "The sleeve earns its existence by expressing what the core can't: single names, themes, tactical trades." },
+            { "value": "intended to become the core portfolio", "label": "No — this is the core", "description": "Tilts the mandate toward diversification and boring quality." }
+          ]
+        },
+        { "key": "outside_portfolio", "label": "Rough shape of the outside portfolio", "help": "'Mostly index funds, a 401k' is enough. No figures needed.", "type": "longtext", "required": false, "maps_to": ["OUTSIDE_PORTFOLIO"], "show_if": { "sleeve_role": "satellite sleeve alongside an existing core portfolio" } },
+        { "key": "do_not_duplicate", "label": "What should the loop NOT duplicate?", "help": "If your core is an S&P index fund, the sleeve gains nothing buying SPY. List exposures the core already holds.", "type": "text", "required": false, "maps_to": ["DO_NOT_DUPLICATE"], "default": "broad index ETFs already held in the core portfolio", "show_if": { "sleeve_role": "satellite sleeve alongside an existing core portfolio" } },
+        { "key": "outside_account_check", "label": "Want a per-cycle one-line read on accounts this loop can't trade?", "help": "Advice only, costs one line. Name the accounts and holdings.", "type": "longtext", "required": false, "maps_to": ["OUTSIDE_ACCOUNT_CHECK"], "delete_if_empty": true }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Investment ideology",
+      "fields": [
+        {
+          "key": "strategy",
+          "label": "What do you actually believe about markets?",
+          "help": "Pick the closest and edit. An agent with no stated edge buys whatever was in the news that morning.",
+          "type": "longtext",
+          "required": true,
+          "maps_to": ["STRATEGY"],
+          "presets": [
+            "Buy quality companies at fair prices and hold — edge is patience, not information. Will not chase momentum or rotate on headlines.",
+            "Find stories the market hasn't priced yet — edge is being early to a thesis. Will not average down into a broken one.",
+            "Catch mispricings and rotate — edge is speed of recognition. Will not hold losers hoping.",
+            "Ride momentum with strict exits — edge is discipline, not prediction. Will not hold through a broken trend."
+          ]
+        },
+        {
+          "key": "time_horizon",
+          "label": "Time horizon",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["TIME_HORIZON"],
+          "options": [
+            { "value": "weeks to months", "label": "Weeks to months" },
+            { "value": "months to a year", "label": "Months to a year" },
+            { "value": "years", "label": "Years" }
+          ]
+        },
+        { "key": "thesis", "label": "A thesis you already hold (optional)", "help": "In your words, with the why. Most people setting this up have one.", "type": "longtext", "required": false, "maps_to": ["THESIS"], "default": "no fixed opening thesis — scan broadly and let the entry test find the first positions" },
+        { "key": "thesis_break_test", "label": "What would change your mind about it?", "help": "Something falsifiable. 'If revenue growth drops below X' beats 'if things look bad'. Becomes the break test the loop runs every cycle.", "type": "longtext", "required": false, "maps_to": ["THESIS_BREAK_TEST"], "default": "a holding's stated reason to own it stops being true — not a price move alone, but the thesis itself" },
+        {
+          "key": "cross_sector_rule",
+          "label": "Should it deliberately look outside your thesis every cycle?",
+          "help": "Strongly recommended. Concentrated books drift into monocultures.",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["CROSS_SECTOR_RULE"],
+          "options": [
+            { "value": "Every cycle, scan at least three sectors outside the current thesis. A name outside the thesis that passes the entry test gets a starter position — no exceptions.", "label": "Yes, with teeth (recommended)", "description": "An outside name that passes the entry test is a mandatory starter position." },
+            { "value": "Every cycle, scan sectors outside the thesis and journal what was found and why it was passed or acted on.", "label": "Yes, advisory", "description": "Must look and journal, but not obligated to act." },
+            { "value": "Stay within the thesis universe.", "label": "No", "description": "Higher monoculture risk. The section is deleted from the mandate if you pick this." }
+          ],
+          "delete_if": "Stay within the thesis universe."
+        },
+        {
+          "key": "benchmark",
+          "label": "How will you know it's working?",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["BENCHMARK"],
+          "options": [
+            { "value": "total return vs. the same dollars in an S&P 500 index fund, re-evaluated quarterly", "label": "Beat an S&P 500 index fund" },
+            { "value": "total return vs. the same dollars in a Nasdaq-100 index fund, re-evaluated quarterly", "label": "Beat a Nasdaq-100 index fund" },
+            { "value": "learning and process quality — re-evaluate on journal review, not returns", "label": "I'm doing this to learn" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Risk and hard limits",
+      "fields": [
+        {
+          "key": "max_position",
+          "label": "Max size of any single position",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["MAX_POSITION"],
+          "options": [
+            { "value": "10% of sleeve equity per position", "label": "10% of the sleeve" },
+            { "value": "20% of sleeve equity per position", "label": "20% of the sleeve" },
+            { "value": "25% of sleeve equity per position", "label": "25% of the sleeve" }
+          ]
+        },
+        {
+          "key": "concentration_ceiling",
+          "label": "Most any single name may grow to",
+          "help": "Trimming back past the ceiling is how a good call is kept from quietly becoming the whole book.",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["CONCENTRATION_CEILING"],
+          "options": [
+            { "value": "25% of sleeve equity", "label": "25%" },
+            { "value": "35% of sleeve equity", "label": "35%" },
+            { "value": "50% of sleeve equity", "label": "50%" }
+          ]
+        },
+        {
+          "key": "leverage_policy",
+          "label": "Leveraged ETFs / 0DTE / decay products",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["LEVERAGE_POLICY"],
+          "options": [
+            { "value": "forbidden — no leveraged ETFs, no 0DTE, no decay products", "label": "Forbidden (recommended)" },
+            { "value": "allowed only with an explicit stop, a time-box, and a journaled thesis on every entry", "label": "Allowed with strict rules" }
+          ]
+        },
+        { "key": "never_allowed", "label": "Never allowed", "help": "Shorting, penny stocks, sectors you won't own — plus whatever you said would make you shut it off.", "type": "text", "required": true, "maps_to": ["NEVER_ALLOWED"], "default": "shorting, penny stocks, margin" },
+        {
+          "key": "drawdown_response",
+          "label": "If the sleeve is down 25%, the loop should…",
+          "help": "Decide now, while nobody is losing money.",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["DRAWDOWN_RESPONSE"],
+          "options": [
+            { "value": "down 25% from peak: stop opening new positions, journal a full review, manage existing only", "label": "Stop opening, review (recommended)" },
+            { "value": "down 25% from peak: de-risk to at least 50% cash and journal a full review", "label": "De-risk to cash" },
+            { "value": "down 25% from peak: no automatic action — drawdowns are expected; re-examine the thesis, not the balance", "label": "Nothing automatic" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Autonomy and cadence",
+      "fields": [
+        {
+          "key": "autonomy",
+          "label": "How much autonomy?",
+          "help": "The consequential setting. Propose-only is a genuinely good way to spend the first few weeks.",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["AUTONOMY"],
+          "options": [
+            { "value": "PROPOSE-ONLY — place NO orders. State the exact order you would place, journal it, leave it for the owner.", "label": "Propose-only (recommended to start)", "description": "Full analysis and journaling; orders wait for you.", "derives": { "AUTONOMY_LINE": "PROPOSE-ONLY — place NO orders. State the exact order you would place, journal it, leave it for the owner." } },
+            { "value": "FULL AUTONOMY — no user confirmation needed for any trade.", "label": "Full autonomy", "description": "Places orders unattended. Can lose money while you sleep.", "derives": { "AUTONOMY_LINE": "FULL AUTONOMY — no user confirmation needed for any trade." } },
+            { "value": "MIXED — autonomous up to a per-order threshold; above it, propose only.", "label": "Mixed", "description": "Autonomous under a threshold, approval above it." }
+          ]
+        },
+        { "key": "autonomy_threshold", "label": "Per-order threshold ($)", "type": "text", "required": false, "maps_to": ["THRESHOLD"], "show_if": { "autonomy": "MIXED — autonomous up to a per-order threshold; above it, propose only." }, "note": "MIXED renders AUTONOMY_LINE as 'Place orders up to $THRESHOLD without confirmation; above that, journal the proposed order and leave it.'" },
+        {
+          "key": "cadence",
+          "label": "How often should it run?",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["CADENCE"],
+          "options": [
+            { "value": "3x per weekday (open, midday, pre-close)", "label": "3× per weekday", "description": "Reference cadence.", "derives": { "SLOTS": "9:30 / 12:30 / 15:30 ET", "CRON_UTC_EDT": "30 13,16,19 * * 1-5", "CRON_UTC_EST": "30 14,17,20 * * 1-5" } },
+            { "value": "once per weekday", "label": "Once daily", "derives": { "SLOTS": "9:45 ET", "CRON_UTC_EDT": "45 13 * * 1-5", "CRON_UTC_EST": "45 14 * * 1-5" } },
+            { "value": "weekly", "label": "Weekly", "description": "Legitimate for a long-horizon mandate.", "derives": { "SLOTS": "Mondays 9:45 ET", "CRON_UTC_EDT": "45 13 * * 1", "CRON_UTC_EST": "45 14 * * 1" } }
+          ]
+        },
+        {
+          "key": "scheduler",
+          "label": "Where does it run?",
+          "type": "choice",
+          "required": true,
+          "maps_to": ["SCHEDULER"],
+          "options": [
+            { "value": "cloud routine (claude.ai)", "label": "Cloud (recommended)", "description": "Nothing on your machine; laptop can be shut. The wizard drives this path." },
+            { "value": "local launchd/cron via ops/run.sh", "label": "Local", "description": "Fully under your control; stops when the laptop sleeps." }
+          ]
+        },
+        { "key": "journal_extra_lines", "label": "Anything extra every journal entry should include?", "type": "longtext", "required": false, "maps_to": ["JOURNAL_EXTRA_LINES"], "delete_if_empty": true }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "What did we miss?",
+      "fields": [
+        { "key": "one_rule", "label": "What's the one rule you'd be upset if this thing broke?", "help": "A stock you'd never sell, a date you need cash by, a hard ceiling on what's at risk.", "type": "longtext", "required": false, "maps_to": ["NEVER_ALLOWED", "JOURNAL_EXTRA_LINES"] }
+      ]
+    }
+  ],
+  "derived_fields": [
+    { "key": "DATE", "rule": "today's date at setup time" },
+    { "key": "REPO_URL", "rule": "the GitHub repo created during setup" },
+    { "key": "REPO_PATH", "rule": "local: absolute clone path; cloud: the repo root in the runner checkout" },
+    { "key": "MCP_SERVER", "rule": "from broker option's derives, or free text for 'other'" },
+    { "key": "AUTONOMY_LINE", "rule": "from autonomy option's derives; MIXED renders with autonomy_threshold" },
+    { "key": "SLOTS", "rule": "from cadence option's derives" },
+    { "key": "MODEL", "rule": "wizard default: a frontier model (currently 'opus' for the local path)" },
+    { "key": "CLI_PATH", "rule": "local scheduler only: `which claude` at setup time" },
+    { "key": "NODE_PATH", "rule": "local scheduler only: `which node` at setup time" }
+  ],
+  "outputs": {
+    "PROFILE.md": "All answers by round, in the user's words, with reasoning; defaults marked per conventions.default_marker.",
+    "LOOP_PROMPT.md": "Every placeholder filled; declined sections deleted outright per delete_if_empty; operational sections never deleted.",
+    "JOURNAL.md": "Standing rules from hard limits + CYCLE 0 entry.",
+    "ops/run.sh": "Filled even for cloud-only users — it's the fallback. CLI_PATH/NODE_PATH only when local.",
+    "ops/sidecar.plist.example": "Only when scheduler is local.",
+    "routine_handoff": "ops/ROUTINE_PROMPT.md rendered with the user's values as one copy-pasteable block, plus the config checklist (tools allowlist including Bash, connector, model, cron with DST caveat, persist_session off)."
+  }
+}

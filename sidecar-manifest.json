@@ -1,0 +1,43 @@
+{
+  "template": "sidecar",
+  "version": "1.0.0",
+  "upstream": {
+    "repo": "fjordskii/sidecar",
+    "branch": "main",
+    "raw_base": "https://raw.githubusercontent.com/fjordskii/sidecar/main"
+  },
+  "files": {
+    "system": [
+      "CLAUDE.md",
+      "INTERVIEW.md",
+      "SETUP.md",
+      "README.md",
+      "LICENSE",
+      "ops/README.md",
+      "ops/ROUTINE_PROMPT.md",
+      "ops/sidecar.plist.example",
+      ".claude/commands/sidecar-init.md",
+      "setup-schema.json",
+      "sidecar-manifest.json",
+      "VERSION"
+    ],
+    "system_if_uninitialized": [
+      "LOOP_PROMPT.md",
+      "JOURNAL.md",
+      "ops/run.sh"
+    ],
+    "user": [
+      "PROFILE.md",
+      "JOURNAL.md",
+      "JOURNAL_ARCHIVE.md",
+      "LOOP_PROMPT.md",
+      "ops/run.log"
+    ]
+  },
+  "notes": {
+    "system": "Template-owned. Replaced wholesale by sidecar-update.yml on every upstream release.",
+    "system_if_uninitialized": "Template-owned only while the file still contains {{PLACEHOLDER}} markers. Once the setup interview fills it, it is the user's and is never touched again — it is skipped and named in the update PR instead.",
+    "user": "Never touched by tooling. JOURNAL.md and LOOP_PROMPT.md appear here and in system_if_uninitialized; the placeholder check is what resolves the overlap.",
+    "workflow": ".github/workflows/sidecar-update.yml cannot update itself (GITHUB_TOKEN may not push workflow-file changes). When the rail changes upstream, the update PR body flags it as a one-file manual copy."
+  }
+}

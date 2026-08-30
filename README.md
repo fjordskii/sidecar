@@ -51,6 +51,15 @@ Nothing here is specific to either. You need two things:
 - **Something that runs an agent on a timer** — Claude Routines, `cron`/`launchd` ([`ops/`](ops/)
   ships a working one), Cursor background agents, GitHub Actions on a schedule.
 
+## Updating
+
+Your copy is yours forever — but the template keeps improving, so each repo carries an
+update rail: [`.github/workflows/sidecar-update.yml`](.github/workflows/sidecar-update.yml)
+checks weekly and opens a PR when the template ships something new. Merge with one click.
+Your journal, profile, and filled-in mandate are never touched — ownership is declared in
+[`sidecar-manifest.json`](sidecar-manifest.json), and files the interview personalized are
+skipped by rule. Pre-rail copy? Details in [SETUP.md](SETUP.md).
+
 ## Before you start
 
 - **It trades without asking.** That's the design — and it's a setting. The interview asks you.
@@ -73,6 +82,7 @@ LOOP_PROMPT.md   the mandate               SETUP.md       broker + scheduling
 JOURNAL.md       the memory                INTERVIEW.md   the setup interview
 PROFILE.md       your answers (on init)    CLAUDE.md      how agents behave here
 ops/             schedulers + the routine prompt
+VERSION + sidecar-manifest.json            template version + the update rail's file ownership
 ```
 
 MIT — see [LICENSE](LICENSE). No warranty, expressly including fitness for trading.

@@ -1,0 +1,169 @@
+# Sidecar template update rail.
+#
+# Weekly (and on demand), compares this repo's VERSION against the upstream template's and,
+# if upstream is newer, opens a PR applying the template-owned files listed in
+# sidecar-manifest.json. Your files are structurally untouchable:
+#
+#   - system: replaced with the upstream version
+#   - system_if_uninitialized: replaced ONLY while the file still contains {{PLACEHOLDER}}
+#     markers — once setup filled it in, it's yours and is skipped (named in the PR body)
+#   - user: never read, never touched
+#
+# First run on a repo that predates this rail treats VERSION as 0.0.0 and opens a PR that
+# backfills VERSION + sidecar-manifest.json without touching anything initialized.
+#
+# Known limit: a GitHub Actions token may not push changes to workflow files, so this rail
+# cannot update itself. When .github/workflows/sidecar-update.yml changed upstream, the PR
+# body says so — copy that one file by hand from the template repo.
+#
+# GitHub disables scheduled workflows after 60 days of repo inactivity. Live loops commit
+# several times a day so this never fires for them; if your loop is paused long-term, press
+# "Run workflow" manually when you come back.
+
+name: Sidecar update
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays 06:17 UTC — off the top of the hour, out of market hours
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve upstream
+        id: src
+        run: |
+          # The manifest carries the upstream location so a renamed/moved template still works.
+          if [ -f sidecar-manifest.json ]; then
+            RAW="$(jq -r '.upstream.raw_base' sidecar-manifest.json)"
+          else
+            RAW="https://raw.githubusercontent.com/fjordskii/sidecar/main"
+          fi
+          echo "raw=$RAW" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch upstream manifest and version
+        run: |
+          curl -fsSL "${{ steps.src.outputs.raw }}/sidecar-manifest.json" -o /tmp/upstream-manifest.json
+          curl -fsSL "${{ steps.src.outputs.raw }}/VERSION" -o /tmp/upstream-VERSION
+
+      - name: Compare versions
+        id: cmp
+        run: |
+          local_v="0.0.0"
+          [ -f VERSION ] && local_v="$(tr -d '[:space:]' < VERSION)"
+          remote_v="$(tr -d '[:space:]' < /tmp/upstream-VERSION)"
+          echo "local=$local_v" >> "$GITHUB_OUTPUT"
+          echo "remote=$remote_v" >> "$GITHUB_OUTPUT"
+          # Update only when remote is strictly newer (semver sort).
+          if [ "$local_v" != "$remote_v" ] && \
+             [ "$(printf '%s\n%s\n' "$local_v" "$remote_v" | sort -V | head -n1)" = "$local_v" ]; then
+            echo "update=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "update=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apply template-owned files
+        id: apply
+        if: steps.cmp.outputs.update == 'true'
+        run: |
+          set -euo pipefail
+          RAW="${{ steps.src.outputs.raw }}"
+          : > /tmp/changed.txt
+          : > /tmp/skipped.txt
+
+          fetch() {
+            mkdir -p "$(dirname "$1")"
+            curl -fsSL "$RAW/$1" -o "$1"
+            echo "$1" >> /tmp/changed.txt
+          }
+
+          # system: always replaced
+          while IFS= read -r f; do
+            fetch "$f"
+          done < <(jq -r '.files.system[]' /tmp/upstream-manifest.json)
+
+          # system_if_uninitialized: replaced only while placeholders remain
+          while IFS= read -r f; do
+            if [ -f "$f" ] && ! grep -q '{{' "$f"; then
+              echo "$f" >> /tmp/skipped.txt
+            else
+              fetch "$f"
+            fi
+          done < <(jq -r '.files.system_if_uninitialized[]' /tmp/upstream-manifest.json)
+
+          cp /tmp/upstream-VERSION VERSION
+          echo "VERSION" >> /tmp/changed.txt
+
+          # The rail cannot update itself — flag drift for a manual copy instead.
+          if curl -fsSL "$RAW/.github/workflows/sidecar-update.yml" -o /tmp/upstream-rail.yml \
+             && ! cmp -s .github/workflows/sidecar-update.yml /tmp/upstream-rail.yml; then
+            echo "rail_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "rail_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open update PR
+        if: steps.cmp.outputs.update == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LOCAL_V: ${{ steps.cmp.outputs.local }}
+          REMOTE_V: ${{ steps.cmp.outputs.remote }}
+          UPSTREAM: ${{ steps.src.outputs.raw }}
+          RAIL_CHANGED: ${{ steps.apply.outputs.rail_changed }}
+        run: |
+          set -euo pipefail
+          branch="sidecar-update/v$REMOTE_V"
+
+          if [ "$(gh pr list --state open --head "$branch" --json number --jq 'length')" != "0" ]; then
+            echo "Update PR for v$REMOTE_V already open — nothing to do."
+            exit 0
+          fi
+
+          if git diff --quiet; then
+            echo "Upstream is newer but no file changes apply (all initialized) — nothing to PR."
+            exit 0
+          fi
+
+          git config user.name "sidecar-update"
+          git config user.email "sidecar-update[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add -A
+          git commit -m "sidecar: template update v$LOCAL_V → v$REMOTE_V"
+          git push -u origin "$branch"
+
+          {
+            echo "## Sidecar template update: v$LOCAL_V → v$REMOTE_V"
+            echo
+            echo "Automated pull of template-owned files from the upstream Sidecar template."
+            echo "**Merging this changes nothing about your strategy, journal, profile, or schedule.**"
+            echo
+            echo "### Updated"
+            sed 's/^/- `/' /tmp/changed.txt | sed 's/$/`/'
+            echo
+            if [ -s /tmp/skipped.txt ]; then
+              echo "### Skipped — already yours"
+              echo "These still have upstream changes, but setup already filled them in, so they"
+              echo "were left alone. Skim the upstream diff if you're curious:"
+              sed 's/^/- `/' /tmp/skipped.txt | sed 's/$/`/'
+              echo
+            fi
+            if [ "$RAIL_CHANGED" = "true" ]; then
+              echo "### ⚠️ Manual step: the update workflow itself changed"
+              echo "GitHub doesn't let a workflow update workflow files. Copy the new"
+              echo "\`.github/workflows/sidecar-update.yml\` from the template repo over this one."
+              echo
+            fi
+            echo "---"
+            echo "Upstream changes: <https://github.com/fjordskii/sidecar/commits/main>"
+          } > /tmp/pr-body.md
+
+          gh pr create \
+            --title "Sidecar update: v$LOCAL_V → v$REMOTE_V" \
+            --body-file /tmp/pr-body.md

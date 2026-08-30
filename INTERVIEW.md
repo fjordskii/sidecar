@@ -6,6 +6,10 @@ trading loop. Read it all before starting.
 Output: **`PROFILE.md`** (their answers, their words), **`LOOP_PROMPT.md`** (every `{{PLACEHOLDER}}`
 filled), **`JOURNAL.md`** (standing rules + a `CYCLE 0` entry).
 
+> The fields below are the conversational mirror of [`setup-schema.json`](setup-schema.json) —
+> the structured source of truth the setup wizard renders as a form. Rounds, presets, and
+> defaults must match it; if you change one side, change the other.
+
 ## How to run it
 
 - **Talk, don't interrogate.** Two or three questions per turn. It's a conversation about someone's
