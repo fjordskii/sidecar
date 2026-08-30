@@ -41,9 +41,15 @@ Make sure they know what they're switching on:
 
 ## 1 — The account
 
-- **Which broker**, and **which specific account** — many brokers gate agent access to one. Get the
-  identifier; every read and order passes it explicitly, and a loop pointed at the wrong account is
-  the worst possible bug.
+- **Which broker.** Then get the account identifier YOURSELF; never ask them to type it. A
+  transcribed number is a typo waiting to happen, and a loop pointed at the wrong account is the
+  worst possible bug. If the broker's MCP server isn't connected yet, pause the interview and have
+  them connect it now (Robinhood: `claude mcp add robinhood-trading --transport http
+  https://agent.robinhood.com/mcp/trading`, plus enabling agent trading in the app; the OAuth
+  approval and the app toggles are theirs, everything else is yours). Once connected, call the
+  accounts endpoint (Robinhood: `get_accounts`), find the account designated for agent trading, and
+  read it back to confirm: "I see account XXXX is your agent-enabled account, right?" Every read and
+  order will pass that identifier explicitly.
 - **Taxable or tax-advantaged?** Changes wash-sale exposure, short-term gains, whether harvesting is
   even a concept here.
 - **Starting capital, and recurring funding?** A loop fed weekly can wait for setups; one with a lump

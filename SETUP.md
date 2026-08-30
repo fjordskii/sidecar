@@ -28,6 +28,10 @@ Say **"initialize"**. The agent reads `AGENTS.md` (via `CLAUDE.md` in Claude Cod
 `INTERVIEW.md` — 10–15 minutes on your goals, existing portfolio, risk limits, and autonomy. It
 writes `PROFILE.md`, fills in `LOOP_PROMPT.md`, and seeds `JOURNAL.md`.
 
+Have your broker's app handy: the interview pauses at the account section so you can enable agent
+trading and approve the MCP connection. The agent then fetches your account ID itself via the
+accounts endpoint; you never transcribe a number.
+
 **Then read `LOOP_PROMPT.md`.** It's plain English and it's what will be spending your money at 7am
 on a Tuesday. If a line doesn't say what you meant, edit it. Highest-leverage ten minutes here.
 
