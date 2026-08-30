@@ -5,8 +5,11 @@ This repo is an agentic trading loop. Read this first.
 ## Is it initialized?
 
 ```bash
-test -f PROFILE.md && ! grep -q '{{' LOOP_PROMPT.md && echo INITIALIZED || echo NOT_INITIALIZED
+test -f PROFILE.md && ! grep -qE '\{\{(ACCOUNT_ID|BROKER|STRATEGY|AUTONOMY)\}\}' LOOP_PROMPT.md && echo INITIALIZED || echo NOT_INITIALIZED
 ```
+
+(The grep targets real setup tokens, not a blanket `{{` — the template header mentions
+`{{PLACEHOLDER}}` in prose, which is not an unfilled token.)
 
 **NOT_INITIALIZED** — fresh clone, nothing configured. Do not trade, do not run a cycle, do not guess
 at a strategy. Greet them, explain in two sentences what this repo is, and offer to run the setup

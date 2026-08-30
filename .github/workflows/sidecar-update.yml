@@ -89,9 +89,12 @@ jobs:
             fetch "$f"
           done < <(jq -r '.files.system[]' /tmp/upstream-manifest.json)
 
-          # system_if_uninitialized: replaced only while placeholders remain
+          # system_if_uninitialized: replaced only while real placeholder tokens remain.
+          # A specific-token grep, not '{{' — templates mention {{PLACEHOLDER}} in prose
+          # ("Fill in every {{PLACEHOLDER}}…"), which a blanket check would false-match
+          # and clobber a filled file on every update.
           while IFS= read -r f; do
-            if [ -f "$f" ] && ! grep -q '{{' "$f"; then
+            if [ -f "$f" ] && ! grep -qE '\{\{(ACCOUNT_ID|BROKER|MCP_SERVER|STRATEGY|REPO_PATH|CLI_PATH|NODE_PATH|DATE|SLOTS|AUTONOMY|AUTONOMY_LINE)\}\}' "$f"; then
               echo "$f" >> /tmp/skipped.txt
             else
               fetch "$f"
