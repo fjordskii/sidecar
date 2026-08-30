@@ -19,6 +19,7 @@
           "label": "Live money or paper?",
           "type": "choice",
           "required": true,
+          "default": "LIVE — real orders, real money",
           "maps_to": ["LIVE_OR_PAPER"],
           "options": [
             { "value": "LIVE — real orders, real money", "label": "Live", "description": "Real orders from the first trade. Robinhood has no paper environment." },
@@ -45,6 +46,7 @@
           "label": "Broker",
           "type": "choice",
           "required": true,
+          "default": "Robinhood",
           "maps_to": ["BROKER"],
           "options": [
             { "value": "Robinhood", "label": "Robinhood", "description": "Reference path. Agent trading enabled in the app; one designated account.", "derives": { "MCP_SERVER": "robinhood-trading" } },
@@ -59,18 +61,20 @@
           "label": "Taxable or tax-advantaged?",
           "type": "choice",
           "required": true,
+          "default": "taxable",
           "maps_to": ["ACCOUNT_TAX_STATUS"],
           "options": [
             { "value": "taxable", "label": "Taxable", "description": "Short-term gains and wash-sale exposure apply." },
             { "value": "tax-advantaged", "label": "Tax-advantaged (IRA etc.)", "description": "No wash-sale or short-term-gain concerns inside the account." }
           ]
         },
-        { "key": "starting_capital", "label": "Starting capital", "help": "Rough is fine. The loop reads live buying power every cycle regardless.", "type": "text", "required": true, "maps_to": ["STARTING_CAPITAL"] },
+        { "key": "starting_capital", "label": "Starting capital", "help": "Rough is fine. The loop reads live buying power every cycle regardless.", "type": "text", "required": true, "default": "unspecified at setup; the loop reads live buying power every cycle", "maps_to": ["STARTING_CAPITAL"] },
         {
           "key": "funding_cadence",
           "label": "Will you add money regularly?",
           "type": "choice",
           "required": true,
+          "default": "lump sum, no recurring funding",
           "maps_to": ["FUNDING_CADENCE"],
           "options": [
             { "value": "lump sum, no recurring funding", "label": "One lump sum" },
@@ -83,6 +87,7 @@
           "label": "What can it trade?",
           "type": "multi",
           "required": true,
+          "default": "stocks, ETFs",
           "maps_to": ["INSTRUMENTS"],
           "options": [
             { "value": "stocks", "label": "Stocks" },
@@ -103,13 +108,14 @@
           "label": "Is there a portfolio outside this account?",
           "type": "choice",
           "required": true,
+          "default": "satellite sleeve alongside an existing core portfolio",
           "maps_to": ["SLEEVE_ROLE"],
           "options": [
             { "value": "satellite sleeve alongside an existing core portfolio", "label": "Yes — this is a sidecar", "description": "The sleeve earns its existence by expressing what the core can't: single names, themes, tactical trades." },
             { "value": "intended to become the core portfolio", "label": "No — this is the core", "description": "Tilts the mandate toward diversification and boring quality." }
           ]
         },
-        { "key": "outside_portfolio", "label": "Rough shape of the outside portfolio", "help": "'Mostly index funds, a 401k' is enough. No figures needed.", "type": "longtext", "required": false, "maps_to": ["OUTSIDE_PORTFOLIO"], "show_if": { "sleeve_role": "satellite sleeve alongside an existing core portfolio" } },
+        { "key": "outside_portfolio", "label": "Rough shape of the outside portfolio", "help": "'Mostly index funds, a 401k' is enough. No figures needed.", "type": "longtext", "required": false, "default": "not specified at setup; assume the outside core holds broad index exposure", "maps_to": ["OUTSIDE_PORTFOLIO"], "show_if": { "sleeve_role": "satellite sleeve alongside an existing core portfolio" } },
         { "key": "do_not_duplicate", "label": "What should the loop NOT duplicate?", "help": "If your core is an S&P index fund, the sleeve gains nothing buying SPY. List exposures the core already holds.", "type": "text", "required": false, "maps_to": ["DO_NOT_DUPLICATE"], "default": "broad index ETFs already held in the core portfolio", "show_if": { "sleeve_role": "satellite sleeve alongside an existing core portfolio" } },
         { "key": "outside_account_check", "label": "Want a per-cycle one-line read on accounts this loop can't trade?", "help": "Advice only, costs one line. Name the accounts and holdings.", "type": "longtext", "required": false, "maps_to": ["OUTSIDE_ACCOUNT_CHECK"], "delete_if_empty": true }
       ]
@@ -137,6 +143,7 @@
           "label": "Time horizon",
           "type": "choice",
           "required": true,
+          "default": "years",
           "maps_to": ["TIME_HORIZON"],
           "options": [
             { "value": "weeks to months", "label": "Weeks to months" },
@@ -152,6 +159,7 @@
           "help": "Strongly recommended. Concentrated books drift into monocultures.",
           "type": "choice",
           "required": true,
+          "default": "Every cycle, scan at least three sectors outside the current thesis. A name outside the thesis that passes the entry test gets a starter position — no exceptions.",
           "maps_to": ["CROSS_SECTOR_RULE"],
           "options": [
             { "value": "Every cycle, scan at least three sectors outside the current thesis. A name outside the thesis that passes the entry test gets a starter position — no exceptions.", "label": "Yes, with teeth (recommended)", "description": "An outside name that passes the entry test is a mandatory starter position." },
@@ -165,6 +173,7 @@
           "label": "How will you know it's working?",
           "type": "choice",
           "required": true,
+          "default": "total return vs. the same dollars in an S&P 500 index fund, re-evaluated quarterly",
           "maps_to": ["BENCHMARK"],
           "options": [
             { "value": "total return vs. the same dollars in an S&P 500 index fund, re-evaluated quarterly", "label": "Beat an S&P 500 index fund" },
@@ -183,6 +192,7 @@
           "label": "Max size of any single position",
           "type": "choice",
           "required": true,
+          "default": "20% of sleeve equity per position",
           "maps_to": ["MAX_POSITION"],
           "options": [
             { "value": "10% of sleeve equity per position", "label": "10% of the sleeve" },
@@ -196,6 +206,7 @@
           "help": "Trimming back past the ceiling is how a good call is kept from quietly becoming the whole book.",
           "type": "choice",
           "required": true,
+          "default": "35% of sleeve equity",
           "maps_to": ["CONCENTRATION_CEILING"],
           "options": [
             { "value": "25% of sleeve equity", "label": "25%" },
@@ -208,6 +219,7 @@
           "label": "Leveraged ETFs / 0DTE / decay products",
           "type": "choice",
           "required": true,
+          "default": "forbidden — no leveraged ETFs, no 0DTE, no decay products",
           "maps_to": ["LEVERAGE_POLICY"],
           "options": [
             { "value": "forbidden — no leveraged ETFs, no 0DTE, no decay products", "label": "Forbidden (recommended)" },
@@ -221,6 +233,7 @@
           "help": "Decide now, while nobody is losing money.",
           "type": "choice",
           "required": true,
+          "default": "down 25% from peak: stop opening new positions, journal a full review, manage existing only",
           "maps_to": ["DRAWDOWN_RESPONSE"],
           "options": [
             { "value": "down 25% from peak: stop opening new positions, journal a full review, manage existing only", "label": "Stop opening, review (recommended)" },
@@ -240,6 +253,7 @@
           "help": "The consequential setting. Propose-only is a genuinely good way to spend the first few weeks.",
           "type": "choice",
           "required": true,
+          "default": "PROPOSE-ONLY — place NO orders. State the exact order you would place, journal it, leave it for the owner.",
           "maps_to": ["AUTONOMY"],
           "options": [
             { "value": "PROPOSE-ONLY — place NO orders. State the exact order you would place, journal it, leave it for the owner.", "label": "Propose-only (recommended to start)", "description": "Full analysis and journaling; orders wait for you.", "derives": { "AUTONOMY_LINE": "PROPOSE-ONLY — place NO orders. State the exact order you would place, journal it, leave it for the owner." } },
@@ -253,6 +267,7 @@
           "label": "How often should it run?",
           "type": "choice",
           "required": true,
+          "default": "3x per weekday (open, midday, pre-close)",
           "maps_to": ["CADENCE"],
           "options": [
             { "value": "3x per weekday (open, midday, pre-close)", "label": "3× per weekday", "description": "Reference cadence.", "derives": { "SLOTS": "9:30 / 12:30 / 15:30 ET", "CRON_UTC_EDT": "30 13,16,19 * * 1-5", "CRON_UTC_EST": "30 14,17,20 * * 1-5" } },
@@ -265,6 +280,7 @@
           "label": "Where does it run?",
           "type": "choice",
           "required": true,
+          "default": "cloud routine (claude.ai)",
           "maps_to": ["SCHEDULER"],
           "options": [
             { "value": "cloud routine (claude.ai)", "label": "Cloud (recommended)", "description": "Nothing on your machine; laptop can be shut. The wizard drives this path." },
