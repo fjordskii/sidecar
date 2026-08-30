@@ -51,7 +51,7 @@
           ]
         },
         { "key": "mcp_server", "label": "MCP server name", "type": "text", "required": true, "maps_to": ["MCP_SERVER"], "derived_from": "broker", "note": "Auto-filled from broker; editable for 'other'. Tool names are unprefixed on Robinhood." },
-        { "key": "account_id", "label": "Account identifier", "help": "The exact account number or ID. Robinhood designates ONE account for agent trading — get this right; every read and order carries it.", "type": "text", "required": true, "maps_to": ["ACCOUNT_ID"], "sensitive": true },
+        { "key": "account_id", "label": "Robinhood account number", "help": "Every read and order carries this, and Robinhood designates ONE specific account for agent trading when you enable it, so use that one. Find it in the app: account icon (bottom right), then the menu, then Settings, where the account number is listed. Stuck? Finish setup anyway, connect the Robinhood connector on claude.ai, and ask Claude to 'call get_accounts': the answer is the exact identifier, and your agent can amend LOOP_PROMPT.md with it.", "type": "text", "required": true, "maps_to": ["ACCOUNT_ID"], "sensitive": true },
         {
           "key": "account_tax_status",
           "label": "Taxable or tax-advantaged?",
