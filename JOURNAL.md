@@ -7,6 +7,11 @@ thesis.** Do not delete history — rotate it into `JOURNAL_ARCHIVE.md` when thi
 Entries are written for a stranger: the next cycle is a fresh session with no memory of the reasoning
 that produced this one.
 
+Every entry opens with a **status line**: `state: TRADED|HOLD|SKIPPED · order_path: OK|FAILED|NOT_TESTED
+· push: VERIFIED|FAILED`. It's the loop's health check — a cycle reads the previous entry's status
+line before anything else, and `order_path: FAILED` or `push: FAILED` becomes that cycle's first
+repair job. Definitions live in LOOP_PROMPT.md, state 7.
+
 ## Standing rules
 
 _Filled in during setup — a compact summary of the hard limits in `LOOP_PROMPT.md`, which remains the

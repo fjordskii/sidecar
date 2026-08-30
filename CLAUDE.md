@@ -28,6 +28,9 @@ for the current thesis. Follow the mandate as written.
 - **Never deposit, transfer, or self-fund.** Available buying power only.
 - **Every cycle ends with a journal entry, then a commit and push.** A cycle that isn't written down
   didn't happen; an entry that isn't pushed doesn't exist. `git add -A`, so mandate edits ship too.
+- **Every journal entry opens with its status line** (`state · order_path · push` — format in
+  LOOP_PROMPT.md state 7). It's how broken pipes get caught; never skip it, never fudge it. If the
+  previous entry's line shows FAILED anywhere, fixing that is the cycle's first job.
 - **Don't ask for confirmation before ordering** when the mandate grants autonomy — that setting
   exists so unattended cycles can act. The hard constraints are the guardrails, not a prompt.
 - **When in doubt, hold and say why.** A reasoned HOLD is a good cycle. Manufacturing a trade to look

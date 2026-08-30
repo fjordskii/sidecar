@@ -128,18 +128,28 @@ No news or movers tooling? That data comes from web search (step 3), not the tra
 
 ## THE CYCLE
 
-**1. Verify the session.** Call the accounts endpoint — confirms auth and lists valid identifiers. If
-it errors or isn't authenticated, append a `SKIPPED — not authenticated` entry and **stop cleanly**.
-Never error out; the loop must survive to try next cycle.
+Nine states, in order, each with an **exit gate**. Never advance past a failed gate — do what the
+gate says instead (usually: log a short entry with the status line and stop cleanly). Never error
+out; the loop must survive to run next cycle. The robustness lives in the gates, not in any single
+state being clever.
 
-**2. Read the journal.** `tail -c 15000 JOURNAL.md` — not the whole file. The latest CYCLE entry is
-the current thesis and carries triggers left for you by the last run. Honor them: they were set with
-more context about that setup than you have now.
+**1. AUTHENTICATE.** Call the accounts endpoint — confirms auth and lists valid identifiers.
+_Gate:_ authenticated, and `{{ACCOUNT_ID}}` appears in the list. On failure: append a
+`## CYCLE … SKIPPED — not authenticated` entry (status line included) and **stop**.
+
+**2. SYNC.** `tail -c 15000 JOURNAL.md` — not the whole file. The latest CYCLE entry is the current
+thesis and carries triggers left for you by the last run. Honor them: they were set with more context
+about that setup than you have now. **Read the last entry's status line first:** if `order_path:
+FAILED` or `push: FAILED`, that repair is this cycle's first job — a loop that can't trade or can't
+write is broken no matter how well it reasons.
 
 Past ~250–300KB, rotate — move CYCLE entries older than the live narrative arc into
-`JOURNAL_ARCHIVE.md`, keep the header and standing rules. The archive is historical only.
+`JOURNAL_ARCHIVE.md`, keep the header and standing rules. The archive is historical only. **Never
+archive a standing trigger that hasn't fired or been cancelled** — re-state it in your entry first.
 
-**3. Gather data.**
+_Gate:_ you can name the current thesis and every standing trigger.
+
+**3. SCAN.** Gather data:
 
 - **Account state** — portfolio (buying power, cash, value) and positions (symbol, qty, avg cost).
   Pair with live quotes for P&L; most position endpoints omit current price. **If buying power is ~$0
@@ -149,19 +159,37 @@ Past ~250–300KB, rotate — move CYCLE entries older than the live narrative a
 - **Cross-sector scan** per the discipline above — checked against the entry test before dismissal.
 - **Deeper diligence as needed** — historicals, technicals, fundamentals, earnings calendar, chains.
 
-**4. Form a thesis.** What the tape says, how the book is doing, and this cycle's actions with
-reasons. Name what you considered and rejected — a rejected trade with a reason is information for
-the next cycle.
+_Gate:_ live portfolio + positions in hand. The broker API outranks the journal for state — another
+runner may have traded since the last entry.
 
-**5. Execute** per the autonomy setting, all orders against `{{ACCOUNT_ID}}`. Capture each order's id,
-status, and fill. Then query recent orders by timestamp to confirm fills **and** catch anything
-another runner placed since your journal read.
+**4. DECIDE.** Form the thesis: what the tape says, how the book is doing, and this cycle's actions
+with reasons. Name what you considered and rejected — a rejected trade with a reason is information
+for the next cycle. Check every intended action against RISK — HARD LIMITS *before* EXECUTE, not
+after.
 
-**6. Append the entry.** Identify which runner you are (cloud routine / local / interactive) and
-which slot, so the journal stays debuggable when runners overlap:
+_Gate:_ every intended order fits inside the hard limits, or it's already been dropped.
+
+**5. EXECUTE** per the autonomy setting, all orders against `{{ACCOUNT_ID}}`. Capture each order's
+id, status, and fill. Preview before placing when sizing is unclear.
+
+_Gate:_ every placed order has an id captured. Propose-only cycles exit here by design — journal
+the exact proposed orders instead.
+
+**6. RECONCILE.** Query recent orders by timestamp to confirm fills **and** catch anything another
+runner placed since your journal read. Also confirm the **order path itself** — on a HOLD cycle with
+no orders, make one review/preview call anyway. A loop that hasn't proven its pipe is one quiet
+morning away from running read-only for days while looking healthy.
+
+_Gate:_ fills confirmed (or none pending), and you know whether the order path worked — that's the
+`order_path` field on the status line.
+
+**7. JOURNAL.** Append the entry. Identify which runner you are (cloud routine / local / interactive)
+and which slot, so the journal stays debuggable when runners overlap. **The status line comes first
+and is mandatory** — it's how the next cycle (and the owner) catches a broken pipe:
 
 ```markdown
 ## CYCLE <YYYY-MM-DD HH:MM TZ> (<runner>, <slot>)
+state: TRADED | HOLD | SKIPPED · order_path: OK | FAILED | NOT_TESTED · push: <filled in at state 9>
 **Portfolio:** equity $X, buying power $Y, cash $Z; positions: ...
 **News/analysis:** <key signals per holding + market>
 **Thesis:** <what to do and why>
@@ -172,9 +200,16 @@ which slot, so the journal stays debuggable when runners overlap:
 a price, a level, a date, a condition>
 ```
 
-Write it for a stranger. The next cycle is a fresh session with no memory of this reasoning.
+Status fields: `state` — TRADED (≥1 order placed) / HOLD (nothing placed, deliberately or nothing
+to do) / SKIPPED (aborted at a gate). `order_path` — OK (a preview or order call succeeded) / FAILED
+(blocked or errored — say why) / NOT_TESTED (rare; HOLD cycles should test with a preview call).
+`push` — VERIFIED or FAILED, set at state 9; go back and fill it in.
 
-**7. Persist.** The repo `{{REPO_URL}}` is this loop's durable state. Every run commits and pushes
+Write the entry for a stranger. The next cycle is a fresh session with no memory of this reasoning.
+
+_Gate:_ entry appended, status line accurate.
+
+**8. PERSIST.** The repo `{{REPO_URL}}` is this loop's durable state. Every run commits and pushes
 **everything** changed — the entry *and* any mandate edit made this cycle.
 
 ```bash
@@ -183,16 +218,25 @@ cd {{REPO_PATH}} && git add -A && git commit -m "cycle: $(date '+%Y-%m-%d %H:%M 
 
 ⚠️ **Running from a fresh clone (cloud/CI)? You're on a DETACHED HEAD** — `git branch --show-current`
 is empty. A plain `git push` then **fails after the commit succeeded**, so the entry exists locally
-and silently never reaches the remote. Push explicitly and verify:
+and silently never reaches the remote. Push explicitly:
 
 ```bash
 git push origin HEAD:refs/heads/main
+```
+
+**9. VERIFY.** Confirm the push landed:
+
+```bash
 git ls-remote --heads origin   # SHA must match `git rev-parse HEAD`
 ```
 
-**Never treat a failed push as cosmetic.** A change that isn't pushed doesn't exist.
+**Never treat a failed push as cosmetic.** A change that isn't pushed doesn't exist. Then go back
+and set `push: VERIFIED` (or `FAILED`, with the error) in the status line — amend and re-push if
+needed.
 
-**8. Summarize** — one paragraph for the owner on what you did and why.
+_Gate:_ remote SHA matches, status line says so.
+
+**Then summarize** — one paragraph for the owner on what you did and why.
 
 ---
 

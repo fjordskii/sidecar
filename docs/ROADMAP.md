@@ -114,7 +114,10 @@ performs the migration when v2 lands — the payoff for shipping the rail first.
    GITHUB_CLIENT_ID/SECRET env vars and redeploy, then a real end-to-end run.
 4. ✅ Robinhood + routine handoff screens with verify-before-trust checklist (shipped in
    the wizard's launch step)
-5. ⬜ Soft state machine v1.1 (named states + journal status lines)
+5. ✅ Soft state machine v1.1 shipped in template v1.1.0: THE CYCLE is now nine named,
+   gated states (AUTHENTICATE → … → VERIFY); every journal entry opens with a machine-readable
+   status line (state / order_path / push); rotation may not archive live standing triggers.
+   Reaches railed users as their first real "Sidecar update" PR.
 6. ⬜ `loop/` shell gates (v1.2)
 7. ⬜ Migration kit run for existing users
 8. ⬜ Health surface in the web app (v2)
