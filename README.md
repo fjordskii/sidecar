@@ -29,6 +29,12 @@ Log a HOLD and stop. Doing nothing is a valid, journaled outcome.
 
 ## Setup
 
+**The easy way: [sidecar.trade](https://sidecar.trade)** — a guided wizard that creates your
+private repo, walks you through the mandate, and hands you the scheduler config. Three clicks
+plus one paste.
+
+The manual way:
+
 1. **Use this template → make your copy private.** Your journal fills with real balances and positions.
 2. Clone it and open in [Claude Code](https://claude.com/claude-code) (or Cursor, or any coding agent).
 3. Say **"initialize"** (or `/sidecar-init`). A ~10-minute interview about your goals, risk limits,
