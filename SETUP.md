@@ -24,14 +24,16 @@ Cloned this template directly instead? Repoint the remote before anything pushes
 claude
 ```
 
-Say **"initialize"**. The agent reads `CLAUDE.md`, finds the repo unconfigured, and runs
+Say **"initialize"**. The agent reads `AGENTS.md` (via `CLAUDE.md` in Claude Code), finds the repo unconfigured, and runs
 `INTERVIEW.md` — 10–15 minutes on your goals, existing portfolio, risk limits, and autonomy. It
 writes `PROFILE.md`, fills in `LOOP_PROMPT.md`, and seeds `JOURNAL.md`.
 
 **Then read `LOOP_PROMPT.md`.** It's plain English and it's what will be spending your money at 7am
 on a Tuesday. If a line doesn't say what you meant, edit it. Highest-leverage ten minutes here.
 
-> Other agents: say *"Read CLAUDE.md and run the setup interview in INTERVIEW.md."*
+> Other agents: say *"Read AGENTS.md and run the setup interview in INTERVIEW.md."* Codex, Cursor,
+> and most coding agents read `AGENTS.md` automatically; the loop itself — mandate, journal, git,
+> broker MCP — is agent-agnostic. Only the scheduler tooling (`ops/`) has a Claude-flavored default.
 
 ## 3. Broker
 
@@ -134,7 +136,7 @@ and opens a PR with the template-owned changes. Merge it like any PR.
 
 What it touches is declared in [`sidecar-manifest.json`](sidecar-manifest.json):
 
-- **System files** (`CLAUDE.md`, `SETUP.md`, ops scripts, the rail itself) — updated.
+- **System files** (`AGENTS.md`, `CLAUDE.md`, `SETUP.md`, ops scripts, the rail itself) — updated.
 - **Files the interview filled in** (`LOOP_PROMPT.md`, `JOURNAL.md`, `ops/run.sh`) — updated
   *only* while they still contain `{{PLACEHOLDER}}` markers. Once they're yours, they're
   skipped and named in the PR body.

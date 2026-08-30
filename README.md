@@ -80,7 +80,7 @@ skipped by rule. Pre-rail copy? Details in [SETUP.md](SETUP.md).
 ```
 LOOP_PROMPT.md   the mandate               SETUP.md       broker + scheduling
 JOURNAL.md       the memory                INTERVIEW.md   the setup interview
-PROFILE.md       your answers (on init)    CLAUDE.md      how agents behave here
+PROFILE.md       your answers (on init)    AGENTS.md      how agents behave here (CLAUDE.md shims it)
 ops/             schedulers + the routine prompt
 VERSION + sidecar-manifest.json            template version + the update rail's file ownership
 ```

@@ -8,6 +8,7 @@
   },
   "files": {
     "system": [
+      "AGENTS.md",
       "CLAUDE.md",
       "INTERVIEW.md",
       "SETUP.md",
