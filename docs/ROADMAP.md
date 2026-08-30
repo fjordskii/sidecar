@@ -107,10 +107,11 @@ performs the migration when v2 lands — the payoff for shipping the rail first.
 1. ✅ Versioning rail: VERSION, sidecar-manifest.json, sidecar-update.yml
 2. ✅ setup-schema.json — single source of truth for setup fields (drives the wizard form
    AND the agent interview, so they can't drift)
-3. 🟡 Wizard app built (`~/dev/sidecar-web`, Next.js 16): GitHub OAuth → repo creation →
-   schema-driven form → server-side render + atomic commit. 18 render-engine tests green,
-   production build clean. Remaining: create the GitHub OAuth App, push the repo, deploy
-   to Vercel, real end-to-end run.
+3. 🟡 Wizard app deployed: `fjordskii/sidecar-web` (private), live at
+   https://sidecar-web-fjordskiis-projects.vercel.app (protection disabled, Git-connected
+   auto-deploys, WIZARD_SECRET set). 18 render-engine tests green; production smoke-tested.
+   Remaining: GitHub OAuth App creation (web UI only — can't be scripted), then set
+   GITHUB_CLIENT_ID/SECRET env vars and redeploy, then a real end-to-end run.
 4. ✅ Robinhood + routine handoff screens with verify-before-trust checklist (shipped in
    the wizard's launch step)
 5. ⬜ Soft state machine v1.1 (named states + journal status lines)
