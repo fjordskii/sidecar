@@ -8,15 +8,15 @@ This repo is an agentic trading loop. Read this first.
 test -f PROFILE.md && ! grep -qE '\{\{(ACCOUNT_ID|BROKER|STRATEGY|AUTONOMY)\}\}' LOOP_PROMPT.md && echo INITIALIZED || echo NOT_INITIALIZED
 ```
 
-(The grep targets real setup tokens, not a blanket `{{` — the template header mentions
+(The grep targets real setup tokens, not a blanket `{{`: the template header mentions
 `{{PLACEHOLDER}}` in prose, which is not an unfilled token.)
 
-**NOT_INITIALIZED** — fresh clone, nothing configured. Do not trade, do not run a cycle, do not guess
+**NOT_INITIALIZED** means a fresh clone with nothing configured. Do not trade, do not run a cycle, do not guess
 at a strategy. Which init path depends on what you are:
 
 - **Interactive session** (a human is talking to you): greet them, explain in two sentences what this
-  repo is, and offer to run the setup interview. If they agree — or opened the repo asking to set it
-  up — follow **[INTERVIEW.md](INTERVIEW.md)** exactly. It's a conversation, not a form. Touch nothing
+  repo is, and offer to run the setup interview. If they agree (or opened the repo asking to set it
+  up), follow **[INTERVIEW.md](INTERVIEW.md)** exactly. It's a conversation, not a form. Touch nothing
   else during init.
 - **Non-interactive runner** (a scheduled routine with nobody to talk to): run **auto-init**, below,
   then stop. Never attempt the interview; there is no one to answer.
@@ -29,7 +29,7 @@ Mechanical setup only; zero judgment calls. Do all of it, then stop:
    append a `SKIPPED — not authenticated` entry and stop cleanly.
 2. **Account ID** — find the account designated for agent trading in that response. That identifier
    fills every account field below. If several or none are designated, stop and say so in the entry.
-3. **Live capital** — pull the portfolio for that account; current equity is the starting capital.
+3. **Live capital**: pull the portfolio for that account; current equity is the starting capital.
 4. **Write the setup files from `setup-schema.json` defaults**, never from invention. Three tokens
    have no schema default; use exactly these sources:
    - `ACCOUNT_ID` — step 2.

@@ -49,7 +49,7 @@
           "default": "Robinhood",
           "maps_to": ["BROKER"],
           "options": [
-            { "value": "Robinhood", "label": "Robinhood", "description": "Reference path. Agent trading enabled in the app; one designated account.", "derives": { "MCP_SERVER": "robinhood-trading" } },
+            { "value": "Robinhood", "label": "Robinhood", "description": "Reference path. Agent trading enabled in the app; one designated account.", "derives": { "MCP_SERVER": "robinhood-trading", "MCP_SERVER_URL": "https://agent.robinhood.com/mcp/trading" } },
             { "value": "Alpaca", "label": "Alpaca", "description": "Has paper + live endpoints.", "derives": { "MCP_SERVER": "alpaca" } },
             { "value": "other", "label": "Other", "description": "Any broker with an MCP server or API covering quotes, positions, orders.", "derives": { "MCP_SERVER": null } }
           ]
@@ -93,7 +93,7 @@
             { "value": "stocks", "label": "Stocks" },
             { "value": "ETFs", "label": "ETFs" },
             { "value": "options (long calls/puts, covered calls, CSPs)", "label": "Options (level 2)" },
-            { "value": "crypto", "label": "Crypto", "description": "Note: Robinhood's agent server has no crypto tools — allowed strategically, unavailable operationally." }
+            { "value": "crypto", "label": "Crypto", "description": "Note: Robinhood's agent server has no crypto tools, so crypto is allowed strategically but unavailable operationally." }
           ]
         },
         { "key": "options_level", "label": "Options approval level", "type": "text", "required": false, "maps_to": ["OPTIONS_LEVEL"], "show_if": { "instruments": "options (long calls/puts, covered calls, CSPs)" }, "note": "Rendered empty (omitted) when options are not in instruments." }
@@ -203,7 +203,7 @@
         {
           "key": "concentration_ceiling",
           "label": "Most any single name may grow to",
-          "help": "Trimming back past the ceiling is how a good call is kept from quietly becoming the whole book.",
+          "help": "Trimming back past the ceiling is how a good call is kept from becoming the whole book.",
           "type": "choice",
           "required": true,
           "default": "35% of sleeve equity",
@@ -250,7 +250,7 @@
         {
           "key": "autonomy",
           "label": "How much autonomy?",
-          "help": "The consequential setting. Propose-only is a genuinely good way to spend the first few weeks.",
+          "help": "The consequential setting. Propose-only is a good way to spend the first few weeks.",
           "type": "choice",
           "required": true,
           "default": "PROPOSE-ONLY — place NO orders. State the exact order you would place, journal it, leave it for the owner.",

@@ -19,7 +19,7 @@ gets the update rail; from then on, template improvements arrive as one-click PR
 >    Run workflow**.
 >
 > It will open a pull request that adds the versioning files. Read it if you're curious,
-> then merge — it does **not** touch your journal, your mandate, or your profile.
+> then merge. It does **not** touch your journal, your mandate, or your profile.
 >
 > From then on, when Sidecar improves you'll get a PR titled "Sidecar update: vX → vY"
 > once a week at most. Merging it is the whole upgrade.

@@ -17,13 +17,13 @@
 | DST | Cron usually fixed **UTC** — drifts twice a year | Local time, follows DST |
 | Debugging | Routine session log | `tail -f ops/run.log` |
 
-**Recommendation: cloud.** The reference setup ran locally for a month then migrated, for one reason:
-no laptop has to stay open. A scheduler that only runs when you're at your desk isn't unattended, and
-the failure is silent — no error, just no cycle.
+**Recommendation: cloud.** The reference setup ran locally for a month, then migrated, for one
+reason: no laptop has to stay open. A scheduler that only runs when you're at your desk isn't
+unattended, and the failure is silent. No error, just no cycle.
 
 Keep `run.sh` filled in anyway. It's the fallback when a cloud routine breaks.
 
-> ⚠️ **Never run both.** Two order-capable runners share one journal with no lock — both wake on the
+> ⚠️ **Never run both.** Two order-capable runners share one journal with no lock: both wake on the
 > same catalyst and spend the same buying power. Migrating? Disable the old one the same day.
 
 ## Local install (macOS)
