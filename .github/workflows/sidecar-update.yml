@@ -93,6 +93,9 @@ jobs:
           # A specific-token grep, not '{{' — templates mention {{PLACEHOLDER}} in prose
           # ("Fill in every {{PLACEHOLDER}}…"), which a blanket check would false-match
           # and clobber a filled file on every update.
+          #
+          # ONLY FILL-IN TEMPLATES MAY BE LISTED HERE. A file that accumulates content
+          # belongs in system_if_absent below — see that block.
           while IFS= read -r f; do
             if [ -f "$f" ] && ! grep -qE '\{\{(ACCOUNT_ID|BROKER|MCP_SERVER|STRATEGY|REPO_PATH|CLI_PATH|NODE_PATH|DATE|SLOTS|AUTONOMY|AUTONOMY_LINE)\}\}' "$f"; then
               echo "$f" >> /tmp/skipped.txt
@@ -100,6 +103,22 @@ jobs:
               fetch "$f"
             fi
           done < <(jq -r '.files.system_if_uninitialized[]' /tmp/upstream-manifest.json)
+
+          # system_if_absent: delivered ONLY when missing. The test is existence, never
+          # content. JOURNAL.md and DECISIONS.md accumulate for months, so the token grep
+          # above is the wrong question for them: it answers "still uninitialized" for as
+          # long as ANY ONE token in the file's header is unfilled, no matter how many
+          # real entries sit below it. Before 1.7.1 that meant a journal with two months
+          # of cycles and a single {{AUTONOMY}} left in its standing rules was replaced
+          # wholesale by the seed — while the PR body promised the journal was untouched.
+          # Absent is the only condition under which it is safe to write these at all.
+          while IFS= read -r f; do
+            if [ -f "$f" ]; then
+              echo "$f" >> /tmp/skipped.txt
+            else
+              fetch "$f"
+            fi
+          done < <(jq -r '.files.system_if_absent[]? // empty' /tmp/upstream-manifest.json)
 
           cp /tmp/upstream-VERSION VERSION
           echo "VERSION" >> /tmp/changed.txt

@@ -48,9 +48,13 @@ workflow from editing workflow files, so when that changes the PR body says so. 
 ## Maintainer notes
 
 - The rail treats a repo with no `VERSION` as `0.0.0` and backfills by PR.
-- Initialized `LOOP_PROMPT.md` / `JOURNAL.md` / `ops/run.sh` are detected by the specific-token
-  grep and skipped — nothing personalized changes. `/sidecar-upgrade` uses the same token list;
-  keep the two in sync if it ever changes.
+- Initialized `LOOP_PROMPT.md` / `ops/run.sh` are detected by the specific-token grep and skipped —
+  nothing personalized changes. `/sidecar-upgrade` uses the same token list; keep the two in sync if
+  it ever changes.
+- `JOURNAL.md` and `DECISIONS.md` are **never** token-tested. They are written only when absent and
+  skipped whenever they exist, because they accumulate — the token grep would answer "still
+  uninitialized" for a journal of any length whose header had one unfilled placeholder. Do not move
+  an accumulating file back into the token-gated class.
 - If a user's loop is paused and their repo goes 60 days without commits, GitHub disables the
   scheduled run. A manual dispatch (step 4) or `/sidecar-upgrade` revives it.
 - With push access to a user's repo, just commit the workflow file yourself — then they only merge.

@@ -26,9 +26,11 @@
     ],
     "system_if_uninitialized": [
       "LOOP_PROMPT.md",
-      "JOURNAL.md",
-      "DECISIONS.md",
       "ops/run.sh"
+    ],
+    "system_if_absent": [
+      "JOURNAL.md",
+      "DECISIONS.md"
     ],
     "user": [
       "PROFILE.md",
@@ -42,8 +44,9 @@
   },
   "notes": {
     "system": "Template-owned. Replaced wholesale by sidecar-update.yml on every upstream release.",
-    "system_if_uninitialized": "Template-owned only while the file still contains real {{TOKEN}} markers (the rail greps for specific setup tokens like {{ACCOUNT_ID}}, not a blanket '{{' — templates mention {{PLACEHOLDER}} in prose). Once setup fills it, the file is the user's and is never touched again — it is skipped and named in the update PR instead.",
-    "user": "Never touched by tooling. JOURNAL.md, DECISIONS.md and LOOP_PROMPT.md appear here and in system_if_uninitialized; the placeholder check is what resolves the overlap. A repo that predates DECISIONS.md simply doesn't have the file, so the rail delivers the seed template on the next update — the {{DATE}} tokens in it make the check read 'uninitialized' exactly once.",
+    "system_if_uninitialized": "Template-owned only while the file still contains real {{TOKEN}} markers (the rail greps for specific setup tokens like {{ACCOUNT_ID}}, not a blanket '{{' — templates mention {{PLACEHOLDER}} in prose). Once setup fills it, the file is the user's and is never touched again — it is skipped and named in the update PR instead. Only FILL-IN TEMPLATES belong here: a file that is written once and then owned. A file that ACCUMULATES content belongs in system_if_absent — see the note there.",
+    "system_if_absent": "Delivered ONLY when the file does not exist, and never touched again — the check is existence, not content. JOURNAL.md and DECISIONS.md accumulate: a user appends to them for months. Token-gating them was a data-loss bug (fixed 1.7.1). The gate asks 'does this still contain a placeholder', which for an accumulating file answers 'yes' for as long as any one token in its header goes unfilled — so a journal with two months of real entries and a single {{AUTONOMY}} left in its standing-rules block was replaced wholesale by the 40-line seed, under a PR body promising the journal was untouched. Existence is the only safe test for these.",
+    "user": "Never touched by tooling. JOURNAL.md, DECISIONS.md and LOOP_PROMPT.md appear here and in a system class; the ownership test resolves the overlap — placeholder tokens for LOOP_PROMPT.md, existence for JOURNAL.md and DECISIONS.md. A repo that predates DECISIONS.md simply doesn't have the file, so the rail delivers the seed on the next update and never touches it again.",
     "workflow": ".github/workflows/sidecar-update.yml cannot update itself (GITHUB_TOKEN may not push workflow-file changes). When the rail changes upstream, the update PR body flags it as a one-file manual copy."
   }
 }
