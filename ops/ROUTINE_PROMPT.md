@@ -24,10 +24,12 @@ yourself via the accounts endpoint (get_accounts), write the setup files from
 setup-schema.json defaults with PROPOSE-ONLY autonomy, prove the order path with one
 review/preview call, commit and push, and stop.
 
-Otherwise, source of truth (read both, in order, from the repo root):
+Otherwise, source of truth (read all three, in order, from the repo root):
   1. Spec/mandate: LOOP_PROMPT.md
-  2. Memory/journal: JOURNAL.md — tail it (do not read the whole file); the most recent
-     CYCLE entry is the current thesis + standing rules. Honor any triggers it left you.
+  2. Durable memory: DECISIONS.md — read it IN FULL. Its Open rows are live commitments
+     that do not expire; honor every one. Its Baseline is the start-of-loop reference.
+  3. Narrative memory: JOURNAL.md — tail it (do not read the whole file); the most recent
+     CYCLE entry is the current thesis + standing rules.
 
 Then execute the loop EXACTLY as LOOP_PROMPT.md describes: check session / portfolio /
 positions / open orders via the robinhood-trading MCP server, gather news + cross-sector
@@ -41,9 +43,11 @@ out.
 Identify yourself in the journal entry as a CLOUD-ROUTINE cycle (distinct from any 'local' or
 'interactive' entries already in the journal) and note which daily slot this is.
 
-Finish by APPENDING a new dated ## CYCLE entry to JOURNAL.md (format in LOOP_PROMPT.md), then
-commit and push — a change that isn't pushed doesn't exist. You are in a FRESH CLONE and
-therefore on a DETACHED HEAD, where a plain `git push` fails *after* the commit succeeds, so
+Finish by APPENDING a new dated ## CYCLE entry to JOURNAL.md (format in LOOP_PROMPT.md) AND
+updating DECISIONS.md — open a row for anything a future cycle must honor, close the rows this
+cycle resolved. The journal tail forgets within days; those rows don't. Then commit and push
+— a change that isn't pushed doesn't exist. You are in a FRESH CLONE and therefore on a
+DETACHED HEAD, where a plain `git push` fails *after* the commit succeeds, so
 push with an explicit refspec and verify:
   git add -A && git commit -m "cycle: <date/time> (cloud routine, <slot>)"
   git push origin HEAD:refs/heads/main
@@ -63,10 +67,12 @@ configured in this repo. You are ONE run of a shared, continuous trading loop �
 separate bot with its own mandate. You share repo state with any interactive session that
 may also touch this account.
 
-Source of truth (read both, in order, from the repo root):
+Source of truth (read all three, in order, from the repo root):
   1. Spec/mandate: LOOP_PROMPT.md
-  2. Memory/journal: JOURNAL.md — tail it (do not read the whole file); the most recent
-     CYCLE entry is the current thesis + standing rules. Honor any triggers it left you.
+  2. Durable memory: DECISIONS.md — read it IN FULL. Its Open rows are live commitments
+     that do not expire; honor every one. Its Baseline is the start-of-loop reference.
+  3. Narrative memory: JOURNAL.md — tail it (do not read the whole file); the most recent
+     CYCLE entry is the current thesis + standing rules.
 
 Then execute the loop EXACTLY as LOOP_PROMPT.md describes: check session / portfolio /
 positions / open orders via the {{MCP_SERVER}} MCP server, gather news + cross-sector
@@ -83,9 +89,11 @@ Identify yourself in the journal entry as a CLOUD-ROUTINE cycle (distinct from a
 'interactive' entries already in the journal) and note which daily slot this is (your
 slots: {{SLOTS}}).
 
-Finish by APPENDING a new dated ## CYCLE entry to JOURNAL.md (format in LOOP_PROMPT.md),
-then commit and push — a change that isn't pushed doesn't exist. You are in a FRESH CLONE
-and therefore on a DETACHED HEAD, where a plain `git push` fails *after* the commit
+Finish by APPENDING a new dated ## CYCLE entry to JOURNAL.md (format in LOOP_PROMPT.md) AND
+updating DECISIONS.md — open a row for anything a future cycle must honor, close the rows this
+cycle resolved. The journal tail forgets within days; those rows don't. Then commit and push
+— a change that isn't pushed doesn't exist. You are in a FRESH CLONE and therefore on a
+DETACHED HEAD, where a plain `git push` fails *after* the commit
 succeeds, so push with an explicit refspec and verify:
   git add -A && git commit -m "cycle: <date/time> (cloud routine, <slot>)"
   git push origin HEAD:refs/heads/main

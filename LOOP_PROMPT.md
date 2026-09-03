@@ -137,17 +137,26 @@ state being clever.
 _Gate:_ authenticated, and `{{ACCOUNT_ID}}` appears in the list. On failure: append a
 `## CYCLE … SKIPPED — not authenticated` entry (status line included) and **stop**.
 
-**2. SYNC.** `tail -c 15000 JOURNAL.md`, not the whole file. The latest CYCLE entry is the current
-thesis and carries triggers left for you by the last run. Honor them: they were set with more context
-about that setup than you have now. **Read the last entry's status line first:** if `order_path:
-FAILED` or `push: FAILED`, that repair is this cycle's first job. A loop that can't trade or can't
-write is broken no matter how well it reasons.
+**2. SYNC.** Two reads, in this order:
+
+1. **`DECISIONS.md` in full.** Small by design, and the only memory that doesn't age out. Its
+   **Open** rows are live commitments — a trigger set six weeks ago is as binding as one set
+   yesterday. Its **Baseline** is how you answer "how are we doing since the start."
+2. **`tail -c 15000 JOURNAL.md`**, not the whole file — the narrative behind the last few days. The
+   latest CYCLE entry is the current thesis. **Read its status line first:** if `order_path: FAILED`
+   or `push: FAILED`, that repair is this cycle's first job. A loop that can't trade or can't write
+   is broken no matter how well it reasons.
+
+The journal tail is a window, roughly the last few days at a normal cadence; `DECISIONS.md` is not.
+Anything you need a future cycle to honor goes in `DECISIONS.md` at state 7, or it is forgotten.
 
 Past ~250–300KB, rotate: move CYCLE entries older than the live narrative arc into
-`JOURNAL_ARCHIVE.md`, keep the header and standing rules. The archive is historical only. **Never
-archive a standing trigger that hasn't fired or been cancelled**; re-state it in your entry first.
+`JOURNAL_ARCHIVE.md`, keep the header and standing rules. The archive is historical only. Rotation
+is safe precisely because open commitments live in `DECISIONS.md` — confirm any unfired trigger in
+the rotated range has an Open row before you archive it.
 
-_Gate:_ you can name the current thesis and every standing trigger.
+_Gate:_ you can name the current thesis and every Open row, and you have not skipped `DECISIONS.md`
+because the journal tail looked sufficient.
 
 **3. SCAN.** Gather data:
 
@@ -195,6 +204,7 @@ state: TRADED | HOLD | SKIPPED · order_path: OK | FAILED | NOT_TESTED · push: 
 **Thesis:** <what to do and why>
 **Orders:** <symbol, side, qty/amount, order id, status> (or "none — hold, because ...")
 **Cross-sector scan:** <what appeared outside the thesis + why you passed or acted>
+**Decisions:** <D-ids opened / closed / cancelled this cycle, or "none">
 {{JOURNAL_EXTRA_LINES}}
 **Notes/next:** <what to watch; any trigger for your future self, stated so it can actually fire —
 a price, a level, a date, a condition>
@@ -207,7 +217,24 @@ to do) / SKIPPED (aborted at a gate). `order_path` — OK (a preview or order ca
 
 Write the entry for a stranger. The next cycle is a fresh session with no memory of this reasoning.
 
-_Gate:_ entry appended, status line accurate.
+**Then update `DECISIONS.md`** — this is the half of state 7 that's easy to skip and expensive to
+skip. The journal entry scrolls out of the tail within days; only these rows are still here in a
+month.
+
+- **Open a row** for anything a future cycle must honor: a position entered (ENTRY, with the reason
+  you'd want quoted back at you), a condition to act on (TRIGGER, written so it can actually fire —
+  a price, a level, a date), a candidate and its entry test (WATCH), a mandate edit made this cycle
+  (AMEND), a broken thing to fix (REPAIR).
+- **Close or cancel** every row this cycle resolved, with the outcome. A trigger that fired and one
+  that quietly stopped mattering both leave the Open table — but only by being written down.
+- **Add a Ruled out row** for a name you examined and passed on, with the one-line why.
+- **Restate, don't assume.** If an Open row is still live but its reasoning changed, close it and
+  open the replacement rather than editing history.
+- Keep it terse — this file is read in full every cycle. Rotate Closed rows past ~20 into
+  `DECISIONS_ARCHIVE.md`; drop Ruled out rows older than 90 days.
+
+_Gate:_ entry appended, status line accurate, and `DECISIONS.md` reflects what this cycle actually
+decided — every order placed has a row, every resolved row is closed.
 
 **8. PERSIST.** The repo `{{REPO_URL}}` is this loop's durable state. Every run commits and pushes
 **everything** changed: the entry *and* any mandate edit made this cycle.

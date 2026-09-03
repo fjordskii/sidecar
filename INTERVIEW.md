@@ -4,7 +4,8 @@
 trading loop. Read it all before starting.
 
 Output: **`PROFILE.md`** (their answers, their words), **`LOOP_PROMPT.md`** (every `{{PLACEHOLDER}}`
-filled), **`JOURNAL.md`** (standing rules + a `CYCLE 0` entry).
+filled), **`JOURNAL.md`** (standing rules + a `CYCLE 0` entry), **`DECISIONS.md`** (baseline + any
+opening commitments).
 
 > The fields below are the conversational mirror of [`setup-schema.json`](setup-schema.json),
 > the structured source of truth the setup wizard renders as a form. Rounds, presets, and
@@ -160,6 +161,13 @@ then reread it as a cold agent with no context and fix anything that doesn't sta
 **`JOURNAL.md`**: keep the header, write standing rules as a compact summary of the hard limits,
 then one `## CYCLE 0` entry dated today: initialization, starting capital, opening thesis, and
 anything they want bought on the first live cycle.
+
+**`DECISIONS.md`**: fill the Baseline block — today's date, starting capital, benchmark, and any
+positions the sleeve starts with. Then open a row for anything from the interview a later cycle must
+honor: a name they want bought on the first live cycle (WATCH, with the entry test), a level they
+told you to act on (TRIGGER), a name they explicitly don't want (Ruled out, with their reason). Keep
+`D-000` until the order path is proven, then let the first cycle close it. This file is read in full
+every cycle, so rows only — their narrative belongs in `PROFILE.md`.
 
 **`ops/`**: you already collected every value these need, so fill them in rather than making the
 user do it twice:

@@ -90,8 +90,9 @@ itself — or do it by hand from [docs/MIGRATION.md](docs/MIGRATION.md).
 
 ```
 LOOP_PROMPT.md   the mandate               SETUP.md       broker + scheduling
-JOURNAL.md       the memory                INTERVIEW.md   the setup interview
-PROFILE.md       your answers (on init)    AGENTS.md      how agents behave here (CLAUDE.md shims it)
+JOURNAL.md       the memory (narrative)    INTERVIEW.md   the setup interview
+DECISIONS.md     the memory (durable)      AGENTS.md      how agents behave here (CLAUDE.md shims it)
+PROFILE.md       your answers (on init)
 ops/             schedulers + the routine prompt
 VERSION + sidecar-manifest.json            template version + the update rail's file ownership
 ```

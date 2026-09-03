@@ -7,6 +7,11 @@ thesis.** Do not delete history; rotate it into `JOURNAL_ARCHIVE.md` when this f
 Entries are written for a stranger: the next cycle is a fresh session with no memory of the reasoning
 that produced this one.
 
+A cycle reads only the **tail** of this file — the last few days. Anything that must outlive that
+window (a trigger waiting to fire, why a position exists, the starting baseline) belongs in
+[`DECISIONS.md`](DECISIONS.md), which is read in full every cycle. Journal = narrative, decisions =
+durable index.
+
 Every entry opens with a **status line**: `state: TRADED|HOLD|SKIPPED · order_path: OK|FAILED|NOT_TESTED
 · push: VERIFIED|FAILED`. It's the loop's health check. A cycle reads the previous entry's status
 line before anything else, and `order_path: FAILED` or `push: FAILED` becomes that cycle's first

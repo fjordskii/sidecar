@@ -72,6 +72,10 @@ for the current thesis. Follow the mandate as written.
 - **Every journal entry opens with its status line** (`state · order_path · push` — format in
   LOOP_PROMPT.md state 7). It's how broken pipes get caught; never skip it, never fudge it. If the
   previous entry's line shows FAILED anywhere, fixing that is the cycle's first job.
+- **`DECISIONS.md` is the memory that doesn't age out.** A cycle reads only the journal's tail, so
+  anything a future cycle must honor — a trigger, why a position exists, a name already ruled out —
+  gets a row there in the same breath as the journal entry. Read it in full at SYNC, update it at
+  JOURNAL, keep it terse.
 - **Don't ask for confirmation before ordering** when the mandate grants autonomy — that setting
   exists so unattended cycles can act. The hard constraints are the guardrails, not a prompt.
 - **When in doubt, hold and say why.** A reasoned HOLD is a good cycle. Manufacturing a trade to look
