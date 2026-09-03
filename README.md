@@ -68,7 +68,8 @@ update rail: [`.github/workflows/sidecar-update.yml`](.github/workflows/sidecar-
 checks weekly and opens a PR when the template ships something new. Merge with one click.
 Your journal, profile, and filled-in mandate are never touched: ownership is declared in
 [`sidecar-manifest.json`](sidecar-manifest.json), and files the interview personalized are
-skipped by rule. Pre-rail copy? Details in [SETUP.md](SETUP.md).
+skipped by rule. Older copy without the rail? Say `/sidecar-upgrade` in Claude and it migrates
+itself — or do it by hand from [docs/MIGRATION.md](docs/MIGRATION.md).
 
 ## Before you start
 

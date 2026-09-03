@@ -153,8 +153,11 @@ PR body asks you to copy that one file by hand. And GitHub disables scheduled wo
 60 days of repo inactivity. Live loops commit constantly so this only matters for paused
 loops; run it manually when you come back.
 
-**Cloned before the rail existed?** One-time install: copy
-[`.github/workflows/sidecar-update.yml`](https://github.com/fjordskii/sidecar/blob/main/.github/workflows/sidecar-update.yml)
-into your repo at the same path (GitHub web UI → Add file works fine). The first run treats
-your repo as v0.0.0 and opens a PR backfilling `VERSION` and the manifest. Your initialized
-files are skipped by the placeholder rule, so nothing you've personalized changes.
+**`/sidecar-upgrade` handles both.** Run it in the same Claude session you use for the loop and it
+installs or repairs the rail, applies any pending template update, and opens the PR — without the
+Actions tab. It obeys the same ownership rules: your journal, profile, and filled-in mandate are
+never touched.
+
+**Cloned before the rail existed?** `/sidecar-upgrade` is the whole migration — it treats your repo
+as v0.0.0 and backfills `VERSION` and the manifest. Prefer to do it by hand on github.com, or don't
+have the command yet? **[docs/MIGRATION.md](docs/MIGRATION.md)** has both paths.

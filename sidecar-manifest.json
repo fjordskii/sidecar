@@ -17,7 +17,9 @@
       "ops/README.md",
       "ops/ROUTINE_PROMPT.md",
       "ops/sidecar.plist.example",
+      "docs/MIGRATION.md",
       ".claude/commands/sidecar-init.md",
+      ".claude/commands/sidecar-upgrade.md",
       "setup-schema.json",
       "sidecar-manifest.json",
       "VERSION"
