@@ -43,6 +43,10 @@ accounts endpoint; you never transcribe a number.
 
 **Robinhood:**
 
+Are you on Robinhood? If not, [sign up with my link](https://join.robinhood.com/fordh) to claim a
+stock reward — a referral link, so we each get a free stock. Account approval and the first ACH take
+a day or two, so start here before anything else. Already have one? Straight to step 1.
+
 No paper environment on this path; every order from step 4 onward is real money.
 
 1. Enable agent trading in the app. Robinhood designates **one specific account** for it, and others

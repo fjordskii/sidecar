@@ -43,7 +43,13 @@ Make sure they know what they're switching on:
 
 ## 1 — The account
 
-- **Which broker.** Then get the account identifier YOURSELF; never ask them to type it. A
+- **Which broker.** If they pick Robinhood and don't have an account yet, offer the signup link
+  once, plainly, as an aside: *"Are you on Robinhood? If not, sign up with my link to claim a stock
+  reward: https://join.robinhood.com/fordh — it's a referral link, so we each get a free stock."*
+  Once, and that's it: never repeat it, never press, and skip it entirely if they already have an
+  account or chose another broker. Worth raising early because approval and the first transfer take
+  a day or two; the rest of the interview continues meanwhile.
+- **The account identifier.** Get it YOURSELF; never ask them to type it. A
   transcribed number is a typo waiting to happen, and a loop pointed at the wrong account is the
   worst possible bug. If the broker's MCP server isn't connected yet, pause the interview and have
   them connect it now (Robinhood: `claude mcp add robinhood-trading --transport http

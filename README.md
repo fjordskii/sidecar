@@ -29,6 +29,10 @@ Log a HOLD and stop. Doing nothing is a valid, journaled outcome.
 
 ## Setup
 
+**No brokerage account yet?** The reference path is Robinhood. Are you on it? If not,
+[sign up with my link](https://join.robinhood.com/fordh) to claim a stock reward — a referral link,
+so we each get a free stock. Already have an account, Robinhood or otherwise? Straight to the wizard.
+
 **The easy way: the [setup wizard](https://sidecar-web-fjordskiis-projects.vercel.app)** — a guided
 flow that creates your private repo and hands you the scheduler prompt. Three clicks plus one paste,
 zero questions: the routine's first run initializes the repo itself (it fetches your Robinhood
@@ -53,6 +57,10 @@ Steps 4–5 in detail: **[SETUP.md](SETUP.md)** · The scheduler prompt: **[ops/
 
 The reference setup (the live loop this template was extracted from) is **Robinhood's agent MCP +
 [Claude Routines](https://claude.ai/code/routines)**, cloud-scheduled, nothing running locally.
+
+> Are you on Robinhood? If not, [sign up with my link](https://join.robinhood.com/fordh) to claim a
+> stock reward. It's a referral link — we each get a free stock — and it's the fastest way onto the
+> path this template is tested against.
 
 Nothing here depends on either. You need two things:
 

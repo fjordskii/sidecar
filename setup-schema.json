@@ -39,7 +39,7 @@
     {
       "id": 1,
       "title": "The account",
-      "intro": "Grab your phone for this one. In the Robinhood app: enable agent trading, complete your investment profile (buys block until you do), and find your account number under the account icon, then the menu, then Settings. Robinhood designates ONE account for agent trading when you enable it; use that account's number below.",
+      "intro": "Are you on Robinhood? If not, sign up with my link to claim a stock reward: https://join.robinhood.com/fordh \u2014 it's a referral link, so we each get a free stock. Already have an account? Grab your phone for this one. In the Robinhood app: enable agent trading, complete your investment profile (buys block until you do), and find your account number under the account icon, then the menu, then Settings. Robinhood designates ONE account for agent trading when you enable it; use that account's number below.",
       "fields": [
         {
           "key": "broker",
@@ -49,7 +49,7 @@
           "default": "Robinhood",
           "maps_to": ["BROKER"],
           "options": [
-            { "value": "Robinhood", "label": "Robinhood", "description": "Reference path. Agent trading enabled in the app; one designated account.", "derives": { "MCP_SERVER": "robinhood-trading", "MCP_SERVER_URL": "https://agent.robinhood.com/mcp/trading" } },
+            { "value": "Robinhood", "label": "Robinhood", "description": "Reference path. Agent trading enabled in the app; one designated account. No account yet? Sign up at https://join.robinhood.com/fordh (referral link \u2014 a stock reward for each of us).", "derives": { "MCP_SERVER": "robinhood-trading", "MCP_SERVER_URL": "https://agent.robinhood.com/mcp/trading" } },
             { "value": "Alpaca", "label": "Alpaca", "description": "Has paper + live endpoints.", "derives": { "MCP_SERVER": "alpaca" } },
             { "value": "other", "label": "Other", "description": "Any broker with an MCP server or API covering quotes, positions, orders.", "derives": { "MCP_SERVER": null } }
           ]

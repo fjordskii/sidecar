@@ -49,6 +49,36 @@ fact, something nobody established at the time — which is exactly what marker 
 
 ---
 
+## [1.10.0] — 2026-09-04 · a way in for people without a broker
+
+**DECISION: no — onboarding copy only. No gate, cap, size, route, clock or REQUIRED ACTION
+moves, and nothing here is read during a cycle.**
+
+Setup assumed you already had a brokerage account. Everyone who didn't hit step 1 of
+`SETUP.md` with nowhere to go, and the interview's broker question had no answer for "I'm
+not on Robinhood yet" — a dead end at the exact moment someone is most willing to act.
+
+### Added
+
+- **A Robinhood signup link at the four places the question actually comes up**: the README
+  (setup section and *Works with*), `SETUP.md` §3 before the Robinhood steps, `INTERVIEW.md`
+  round 1 as an aside the agent offers once, and `setup-schema.json` round 1 (intro and the
+  Robinhood option), which is what the wizard renders as a form.
+- The interview's version is **bounded on purpose**: offered once, never repeated, never
+  pressed, and skipped outright for anyone who already has an account or picked another
+  broker. An agent conducting an interview about someone's money does not get to sell to
+  them; it mentions the link because approval and the first ACH take a day or two and
+  flagging that early is genuinely useful, then drops it.
+
+### Disclosed
+
+It is a **referral link** and every instance of it says so in the same breath, including
+what each side gets. A template that quietly monetises its own setup flow would be a worse
+template. Nothing about the loop's behaviour, broker support, or defaults changes: Alpaca
+and "other" are untouched, and Robinhood remains a choice rather than a requirement.
+
+---
+
 ## [1.9.0] — 2026-09-04 · the rail learns to hold a MAJOR
 
 **DECISION: no — this changes the update path, not any gate, cap, size, route or clock.**
