@@ -1,0 +1,90 @@
+name: CI
+
+# Sidecar is PUBLIC and is cloned by people who then point it at a real brokerage account.
+# One thing must be true of every commit on main: no personal data has leaked into it —
+# one account number is all it takes. That is not a thing a reviewer catches twice.
+#
+# ⚠ These jobs run ONLY on the upstream template. A clone's LOOP_PROMPT.md legitimately
+# contains its owner's real account number, so an ungated scan would fail every commit in
+# every one of those repos, three times a day, forever. The repository guard below is what
+# keeps this gate from becoming the thing that interrupts a user's loop.
+#
+# Deliberately narrow for now: the engine (bot/) is not here yet — it arrives in backport
+# step 3 — so the engine, migration and template-emptiness jobs from the source workflow
+# are held back rather than shipped green-because-empty. They land with the code they test.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: secret scan (blocks the build)
+    if: github.repository == 'fjordskii/sidecar'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # The gate. Anything shaped like a real brokerage account number, a journal cycle
+      # entry, populated state, a personal path or an email fails the build.
+      - name: Scan the working tree
+        run: python3 tools/secret_scan.py
+
+      # A leak that is force-pushed away is still a leak, and git history is forever — so
+      # scan every commit introduced by this push/PR, not just the final tree.
+      - name: Scan the commits this change introduces
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          # A force-push leaves `before` pointing at a commit this checkout no longer has,
+          # and an empty/zero base is a branch's first push. Neither is a scannable range.
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "no usable base commit — scanning the tree only"; exit 0
+          fi
+          fail=0
+          for sha in $(git rev-list "$base..HEAD"); do
+            tmp="$(mktemp -d)"
+            git archive "$sha" | tar -x -C "$tmp"
+            if ! python3 tools/secret_scan.py --path "$tmp" > "$tmp/.out" 2>&1; then
+              echo "::error::secret scan failed in commit $sha"
+              sed "s#$tmp#<commit $sha>#g" "$tmp/.out"
+              fail=1
+            fi
+            rm -rf "$tmp"
+          done
+          exit $fail
+
+  tests:
+    name: tests
+    if: github.repository == 'fjordskii/sidecar'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # No pip install, on purpose. A clone must run from a bare checkout with nothing but
+      # the standard library — if a test needs a package, the engine will eventually need
+      # it too, and then someone's 09:30 cycle fails inside a container nobody is watching.
+      - name: Assert the tooling has no third-party imports
+        run: |
+          set -euo pipefail
+          if grep -rnE '^\s*(import|from)\s+(yaml|jsonschema|requests|pydantic|numpy|pandas)\b' \
+               tools/ tests/ --include='*.py' | grep -v 'except' | grep -v '# optional'; then
+            echo "::error::this repo must not require third-party packages at import time"
+            exit 1
+          fi
+
+      - name: Tests (standard library only)
+        run: cd tests && python3 -m unittest discover -p 'test_*.py' -v
