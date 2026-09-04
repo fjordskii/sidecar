@@ -1,9 +1,10 @@
 """The engine's contract with a stranger's clone.
 
-sidecar ships `bot/` INERT: nothing in the template calls precheck or postcheck, and
-`AGENTS.md` names neither, so the engine activates only when a user adds it to their own
-LOOP_PROMPT.md. That makes these tests the only thing standing between a bad harvest and
-five people's real money, because no cycle will exercise the code before they do.
+Since v2.0.0 the template's own `LOOP_PROMPT.md` calls precheck and postcheck, so a new
+clone runs this code against a real brokerage account from its first cycle. An existing
+repo is switched on only by `/sidecar-activate`, because `AGENTS.md` names no part of
+`bot/` and the rail never touches a filled-in mandate. Either way these tests are the last
+thing standing between a bad harvest and somebody's real money.
 
 Two rules govern how this file works:
 
@@ -174,6 +175,110 @@ class TestEngineRuns(TempCloneCase):
         p = run("postcheck.py", c, "--cycle", "2026-09-04 09:30")
         self.assertIn("POSTCHECK", p.stdout + p.stderr)
         self.assertEqual(read_json(c, "bot", "state.json")["last_cycle"], "2026-09-04 09:30")
+
+
+class TestBandsDoNotBindOnABookTooSmall(TempCloneCase):
+    """A band cannot bind on a book that cannot satisfy it.
+
+    With two positions the smaller is at least 50% of equity; with three, at least 33.3%.
+    So the shipped 35% hard ceiling is arithmetically unreachable below three names. Binding
+    it anyway opened a new user's FIRST cycle with high-severity findings ordering them to
+    trim positions they had just bought, to meet a limit no allocation could have met.
+    """
+
+    def book(self, n, positions, quotes, equity, total="2000.00"):
+        raw = os.path.join(self.clone_dir, "bot", "raw")
+        with open(os.path.join(raw, "portfolio.json"), "w") as f:
+            json.dump({"data": {"account_number": "000000000", "total_value": total,
+                                "equity_value": equity, "cash": "600.00",
+                                "pending_deposits": "0.00",
+                                "buying_power": {"buying_power": "600.00"}}}, f)
+        with open(os.path.join(raw, "positions.json"), "w") as f:
+            json.dump({"data": {"positions": positions}}, f)
+        with open(os.path.join(raw, "quotes.json"), "w") as f:
+            json.dump({"data": {"results": [{"quote": q} for q in quotes]}}, f)
+
+    def findings(self, n_positions):
+        """A book of n positions whose FIRST name is deliberately oversized.
+
+        Equal positions would sit under the band at n=4 and prove nothing about the ramp,
+        so the first name is 3x the rest: 75% of equity at n=2, 60% at n=3, 50% at n=4.
+        It breaches the 35% ceiling at every size — the only variable is whether the band
+        is allowed to bind yet.
+        """
+        self.clone_dir = self.clone()
+        syms = ["AAA", "BBB", "CCC", "DDD", "EEE"][:n_positions]
+        prices = [210.0] + [70.0] * (n_positions - 1)
+        pos = [{"symbol": s, "quantity": "10.0", "average_buy_price": f"{p:.2f}"}  # secret-scan: allow
+               for s, p in zip(syms, prices)]
+        qts = [{"symbol": s, "last_trade_price": f"{p:.4f}",
+                "adjusted_previous_close": f"{p:.4f}"} for s, p in zip(syms, prices)]
+        self.book(n_positions, pos, qts, equity=f"{10.0 * sum(prices):.2f}")
+        run("precheck.py", self.clone_dir)
+        ledger = os.path.join(self.clone_dir, "bot", "failures.jsonl")
+        codes = [json.loads(l)["code"] for l in read(ledger).splitlines() if l.strip()]
+        return codes, read(self.clone_dir, "bot", "brief.md")
+
+    def test_two_positions_produce_no_band_finding(self):
+        codes, brief = self.findings(2)
+        self.assertNotIn("BAND_HARD", codes,
+                         "a 35% ceiling is unreachable with two positions")
+        self.assertNotIn("BAND_BREACH", codes)
+        self.assertIn("ADVISORY", brief, "the user must still be told where they stand")
+
+    def test_three_positions_still_do_not_bind(self):
+        codes, _ = self.findings(3)
+        self.assertNotIn("BAND_HARD", codes)
+
+    def test_four_positions_bind(self):
+        """The gate is a ramp-in, not an amnesty — it must actually start enforcing."""
+        codes, brief = self.findings(4)
+        self.assertIn("BAND_HARD", codes, "bands must bind once the book can satisfy them")
+        self.assertNotIn("ADVISORY", brief)
+
+    def test_the_threshold_is_policy_not_a_constant(self):
+        """An instance that wants bands binding from position one may set it to 0."""
+        st = shipped_state()
+        self.assertEqual(st["policy"]["bands"]["min_positions_to_bind"], 4)
+        st["policy"]["bands"]["min_positions_to_bind"] = 0
+        c = self.clone(state=st)
+        self.clone_dir = c
+        self.book(2, [{"symbol": "AAA", "quantity": "10.0", "average_buy_price": "70.00"},  # secret-scan: allow
+                      {"symbol": "BBB", "quantity": "10.0", "average_buy_price": "70.00"}],  # secret-scan: allow
+                  [{"symbol": "AAA", "last_trade_price": "70.0000",
+                    "adjusted_previous_close": "70.0000"},
+                   {"symbol": "BBB", "last_trade_price": "70.0000",
+                    "adjusted_previous_close": "70.0000"}], equity="1400.00")
+        run("precheck.py", c)
+        codes = [json.loads(l)["code"]
+                 for l in read(c, "bot", "failures.jsonl").splitlines() if l.strip()]
+        self.assertIn("BAND_HARD", codes)
+
+
+class TestTheMandateActivatesTheEngine(unittest.TestCase):
+    """v2.0.0: a new clone runs the engine. An existing repo is not switched on behind it."""
+
+    def test_the_template_mandate_calls_the_engine(self):
+        mandate = read(ROOT, "LOOP_PROMPT.md")
+        self.assertIn("bot/precheck.py", mandate)
+        self.assertIn("bot/postcheck.py", mandate)
+
+    def test_the_mandate_still_ships_as_a_template(self):
+        """It is system_if_uninitialized — the tokens are what keep a filled-in mandate safe."""
+        self.assertIn("{{ACCOUNT_ID}}", read(ROOT, "LOOP_PROMPT.md"))
+
+    def test_agents_md_still_names_no_engine_file(self):
+        """The one file replaced wholesale in an initialized repo. Invariant 2."""
+        import re
+        agents = read(ROOT, "AGENTS.md")
+        self.assertIsNone(re.search(r"bot/|precheck|postcheck|brief\.md|state\.json", agents),
+                          "an engine reference here switches it on without consent")
+
+    def test_there_is_an_opt_in_route_for_existing_repos(self):
+        act = read(ROOT, ".claude", "commands", "sidecar-activate.md")
+        self.assertIn("LOOP_PROMPT.md", act)
+        self.assertIn("policy", act, "it must read the numbers out before they bind")
+        self.assertIn("--commit", act, "it must forbid running postcheck --commit")
 
 
 class TestBlocLabelIsConfiguration(TempCloneCase):

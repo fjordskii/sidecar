@@ -9,8 +9,9 @@ name: CI
 # every one of those repos, three times a day, forever. The repository guard below is what
 # keeps this gate from becoming the thing that interrupts a user's loop.
 #
-# The engine in bot/ ships INERT: nothing in the template calls it. That means CI is the
-# only thing that exercises it before a user does, so the tests below are not a formality.
+# Since v2.0.0 the template's LOOP_PROMPT.md calls the engine, so a new clone runs bot/
+# against a real brokerage account on its first cycle. CI is the only thing that exercises
+# it before they do, so the tests below are not a formality.
 on:
   push:
     branches: [main]
@@ -144,9 +145,12 @@ jobs:
           fi
           echo "changelog OK — $entry_v"
 
-      # Invariant 2 (BACKPORT.md): AGENTS.md is replaced wholesale on every update, so a
-      # single engine reference in it activates the engine in every user's next cycle
-      # without their consent. This is what makes "inert" a property rather than a hope.
+      # Invariant 2 (BACKPORT.md). AGENTS.md is replaced wholesale on every update — it is
+      # the ONE file that reaches an initialized repo unchanged. A single engine reference in
+      # it would therefore switch the engine on in every existing user's next cycle without
+      # their consent. v2.0.0 activates the engine through LOOP_PROMPT.md, which is the
+      # user's own file and which the rail never touches; this check is what keeps that the
+      # only route in.
       - name: AGENTS.md names no engine file
         run: |
           set -euo pipefail

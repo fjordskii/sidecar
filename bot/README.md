@@ -1,19 +1,24 @@
 # bot/ — the deterministic layer
 
-> ## ⚠ THIS SHIPS INERT — nothing runs it until you say so
+> ## ⚠ WHETHER THIS RUNS IS DECIDED BY YOUR MANDATE, AND ONLY BY YOUR MANDATE
 >
-> No file in this template calls `precheck.py` or `postcheck.py`. `AGENTS.md` does not
-> mention them, and it never will: `AGENTS.md` is replaced wholesale on every template
-> update, so one line there would switch the engine on in every user's next cycle without
-> anyone choosing it. The cycle procedure that invokes the engine lives in your own
-> `LOOP_PROMPT.md` — a file the update rail never touches once you have filled it in.
+> Since v2.0.0 the **template's** `LOOP_PROMPT.md` calls `precheck.py` and `postcheck.py`
+> in cycle states 3–8, so a **new clone runs the engine from its first cycle.**
 >
-> **To turn it on:** read this file, set the numbers in `state.json` to yours, and add the
-> steps below to your own mandate. **To leave it off:** do nothing. It is inert files.
+> An **existing** repo does not, and cannot be switched on behind your back. Your mandate is
+> yours: the update rail never touches `LOOP_PROMPT.md` once setup has filled it in, and
+> `AGENTS.md` — the one file that IS replaced wholesale on every update — names no part of
+> `bot/` and never will. One line there would switch the engine on in every user's next
+> cycle without anyone choosing it. CI asserts it stays absent.
 >
-> Before you switch it on, read `state.json`'s `policy` block line by line. Those numbers
-> are STARTING DEFAULTS carried over from the instance this engine was built for. They are
-> not advice, and they were never chosen for your account.
+> **To switch an existing repo on:** run `/sidecar-activate`. It reads you the policy numbers
+> first, shows you exactly which findings would fire on your book today, and only then edits
+> your mandate — as a PR you can close. **To leave it off:** do nothing.
+>
+> ⚠ Either way, read `state.json`'s `policy` block line by line before the engine binds.
+> Those numbers are STARTING DEFAULTS carried over from the instance this engine was built
+> for. They are not advice, they were never chosen for your account, and from v2.0.0 they
+> can block a trade.
 
 **Why this exists:** the loop is a model reading a prose spec, so prose rules fail silently — a
 rule went unrun for ~40 cycles, a capability was never discovered, arithmetic drifted unnoticed.
