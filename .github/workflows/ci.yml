@@ -11,8 +11,6 @@ name: CI
 #
 # The engine in bot/ ships INERT: nothing in the template calls it. That means CI is the
 # only thing that exercises it before a user does, so the tests below are not a formality.
-# Still held back: the source workflow's CHANGELOG gate — sidecar has no CHANGELOG.md and
-# never has, so the convention BACKPORT.md step 5 leans on does not yet exist here.
 on:
   push:
     branches: [main]
@@ -121,6 +119,30 @@ jobs:
             exit 1
           fi
           echo "no private engine files tracked"
+
+      # Every release answers "could this change what my loop does with my money?" before
+      # anything else. An unmarked entry means nobody established it — which is exactly the
+      # state CHANGELOG.md's rule 1 refuses to ship.
+      - name: The newest CHANGELOG entry states its decision impact
+        run: |
+          set -euo pipefail
+          top="$(awk '/^## \[/{n++} n==1' CHANGELOG.md)"
+          if [ -z "$top" ]; then
+            echo "::error::no '## [version]' entry found in CHANGELOG.md"; exit 1
+          fi
+          if ! grep -qE 'DECISION: (no|YES)' <<< "$top"; then
+            echo "::error::the newest CHANGELOG entry has no 'DECISION: no|YES' line"; exit 1
+          fi
+          if grep -q 'DECISION: unknown' <<< "$top"; then
+            echo "::error::'DECISION: unknown' is not shippable"; exit 1
+          fi
+          # The entry's version must be the one this commit actually ships.
+          entry_v="$(sed -n 's/^## \[\([0-9][^]]*\)\].*/\1/p' <<< "$top" | head -n1)"
+          file_v="$(tr -d '[:space:]' < VERSION)"
+          if [ "$entry_v" != "$file_v" ]; then
+            echo "::error::CHANGELOG's newest entry is $entry_v but VERSION says $file_v"; exit 1
+          fi
+          echo "changelog OK — $entry_v"
 
       # Invariant 2 (BACKPORT.md): AGENTS.md is replaced wholesale on every update, so a
       # single engine reference in it activates the engine in every user's next cycle
