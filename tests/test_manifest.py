@@ -154,6 +154,64 @@ class TestSetupClassIsAnsweredByTheMandate(unittest.TestCase):
                          "the rail must ask LOOP_PROMPT.md, not the setup files")
 
 
+class TestMajorHold(unittest.TestCase):
+    """A MAJOR must not reach a user as a routine, ready-to-merge PR.
+
+    The convention promised this from the start and the rail did not do it — a gap that
+    survived only because the engine ships inert. These assert the fix stays fixed, in the
+    rail and in /sidecar-upgrade both (invariant 3).
+    """
+
+    def test_the_rail_computes_a_major_hold(self):
+        rail = read(RAIL)
+        self.assertIn("major_hold", rail)
+        self.assertIn("MAJOR_HOLD", rail, "the PR step must receive the flag")
+
+    def test_the_rail_opens_a_major_as_a_draft_with_a_fallback(self):
+        rail = read(RAIL)
+        self.assertIn("gh pr create --draft", rail)
+        self.assertRegex(rail, r"gh pr create --draft.*\n\s*\|\| gh pr create",
+                         "drafts are unavailable on some private plans — fall back, never fail")
+
+    def test_a_major_drops_the_reassurance_line(self):
+        """'changes nothing about your strategy' is false for a MAJOR, and it is the
+        sentence a non-technical user actually merges on."""
+        rail = read(RAIL)
+        reassurance = "Merging this changes nothing about your strategy"
+        self.assertEqual(rail.count(reassurance), 1, "the line must exist exactly once")
+        before = rail.split(reassurance)[0]
+        # It must sit in the ELSE half of the body's MAJOR conditional. Checking only that
+        # some `if MAJOR_HOLD` precedes it is not enough — that passes even when the line
+        # has been hoisted into the MAJOR branch, which is the regression that matters.
+        opened = before.rfind('if [ "$MAJOR_HOLD" = "true" ]; then')
+        alternative = before.rfind("\n            else")
+        self.assertGreater(alternative, opened,
+                           "the reassurance is reachable on the MAJOR path — for a MAJOR "
+                           "that sentence is false, and it is what a user merges on")
+
+    def test_a_pre_rail_repo_is_never_held(self):
+        """No VERSION means 0.0.0 — adopting the rail, not crossing a major. Without this
+        carve-out every pre-rail user meets the hold on the one PR meant to be easy."""
+        self.assertIn("if [ -f VERSION ]; then", read(RAIL))
+
+    def test_the_rail_never_runs_the_diff_itself(self):
+        """bot/raw/ is gitignored, so a diff from a fresh checkout reports 'no decision
+        changes' having exercised almost nothing — a false all-clear."""
+        self.assertNotIn("behaviour_diff.py --old", read(RAIL).replace("echo ", "IGNORED "))
+
+    def test_the_upgrade_command_carries_the_same_rule(self):
+        up = read(UPGRADE)
+        self.assertIn("MAJOR bump is held", up)
+        self.assertIn("behaviour_diff.py", up)
+        self.assertIn("no `VERSION`", up, "the pre-rail carve-out must be stated here too")
+
+    def test_the_changelog_documents_the_hold_rather_than_the_gap(self):
+        ch = read(os.path.join(ROOT, "CHANGELOG.md"))
+        self.assertIn("A MAJOR is held", ch)
+        self.assertNotIn("it has no MAJOR-hold and no", ch,
+                         "rule 5 still describes the gap this release closed")
+
+
 class TestEngineDelivery(unittest.TestCase):
 
     def test_the_engine_rides_the_rail(self):

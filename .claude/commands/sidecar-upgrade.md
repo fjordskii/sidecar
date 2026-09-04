@@ -45,6 +45,23 @@ Ownership is declared in the upstream `sidecar-manifest.json`. Fetch it first an
   **`README.md` moved here in this release**: it was listed under `system` and so was replaced
   unconditionally, which silently destroyed the README of any instance that had written its own.
 - **Never** run a trading cycle, place an order, or edit strategy as part of an upgrade.
+- ⛔ **A MAJOR bump is held.** If upstream's MAJOR is ahead of the local one — `2.x` when they
+  are on `1.x` — the template is saying, by its own `CHANGELOG.md` convention, that this release
+  **can change what their loop does with their money**. Do not present it as routine:
+  - open it as a **draft** PR (fall back to a normal PR if drafts are unavailable on their plan,
+    but keep the warning in the title and body);
+  - drop the "changes nothing about your strategy" line — for a MAJOR it is false;
+  - lead the body with the newest `CHANGELOG.md` entry's decision line, and with how to run
+    `bot/cli/behaviour_diff.py --old <current> --new <candidate> --instance .` in their clone;
+  - say that closing the PR is a legitimate outcome: declining a behaviour change is not
+    falling behind.
+  **Do not run the behaviour diff for them from CI or from a bare checkout.** `bot/raw/` is
+  gitignored, so it is absent there, and the diff degrades to exercising almost none of the
+  decision surface while still printing "no decision changes" — a false all-clear on exactly
+  the release that warrants the check. It has to run where their data is. If you are in their
+  clone with `bot/raw/` populated, running it and pasting the output IS the right thing to do.
+  A repo with **no `VERSION`** is at `0.0.0` and is *adopting* the rail, not crossing a major —
+  never hold that one.
 
 ## Steps
 
@@ -62,7 +79,8 @@ Ownership is declared in the upstream `sidecar-manifest.json`. Fetch it first an
    ⛔ `tools/` and `tests/` are in **no** class and are never fetched: they are the template repo's
    own CI, and `tools/secret_scan.py` would fail a build on the real account number that belongs in
    a private clone's mandate.
-5. **Ship it as a PR**, branch `sidecar-update/v<upstream>`. Use whatever GitHub tooling this
+5. **Ship it as a PR**, branch `sidecar-update/v<upstream>` — a draft one if the MAJOR-hold
+   above applies. Use whatever GitHub tooling this
    session has (the `gh` CLI, GitHub MCP tools). If you can't open a PR, push the branch and give
    them the compare URL. Never push template changes straight to `main`.
 
