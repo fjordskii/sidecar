@@ -11,4 +11,8 @@ ops/run.log
 .env.*
 !.env.example
 
+# Python build artifacts (tools/ and tests/ are the repo's first Python).
+__pycache__/
+*.pyc
+
 .DS_Store
