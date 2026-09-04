@@ -14,6 +14,12 @@
 #     (JOURNAL.md, DECISIONS.md, bot/state.json) — see the manifest's note
 #   - user: never read, never touched
 #
+# MAJOR RELEASES ARE HELD. A release that can change a trading decision must not arrive as
+# a ready-to-merge pull request. When upstream's MAJOR is ahead of yours the PR is opened as
+# a DRAFT, its body drops every "this changes nothing" reassurance, and it tells you to run
+# the behaviour diff yourself first. See the "MAJOR" block in the PR step for why this
+# workflow does not run that diff for you.
+#
 # First run on a repo that predates this rail treats VERSION as 0.0.0 and opens a PR that
 # backfills VERSION + sidecar-manifest.json without touching anything initialized.
 #
@@ -73,6 +79,23 @@ jobs:
           else
             echo "update=false" >> "$GITHUB_OUTPUT"
           fi
+
+          # MAJOR-hold. By CHANGELOG.md's convention a MAJOR bump means "this can change a
+          # trading decision", and such a release is opt-in and must not be installed before
+          # a behaviour diff has been shown.
+          #
+          # The `[ -f VERSION ]` guard matters: a repo with no VERSION is at 0.0.0 and is
+          # ADOPTING the rail, not crossing a major. Without the guard every pre-rail user
+          # would meet this hold on the one PR that is meant to be easy.
+          major_hold=false
+          if [ -f VERSION ]; then
+            local_major="${local_v%%.*}"; remote_major="${remote_v%%.*}"
+            case "$local_major$remote_major" in
+              *[!0-9]*) ;;                      # unparseable version — do not guess
+              *) [ "$remote_major" -gt "$local_major" ] && major_hold=true ;;
+            esac
+          fi
+          echo "major_hold=$major_hold" >> "$GITHUB_OUTPUT"
 
       - name: Apply template-owned files
         id: apply
@@ -173,6 +196,10 @@ jobs:
           REMOTE_V: ${{ steps.cmp.outputs.remote }}
           UPSTREAM: ${{ steps.src.outputs.raw }}
           RAIL_CHANGED: ${{ steps.apply.outputs.rail_changed }}
+          MAJOR_HOLD: ${{ steps.cmp.outputs.major_hold }}
+          # Named explicitly: the PR body prints a git command the user pastes, and under
+          # `set -u` an unset variable would abort the job instead of writing the body.
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch || 'main' }}
         run: |
           set -euo pipefail
           branch="sidecar-update/v$REMOTE_V"
@@ -194,12 +221,63 @@ jobs:
           git commit -m "sidecar: template update v$LOCAL_V → v$REMOTE_V"
           git push -u origin "$branch"
 
+          # MAJOR: everything below changes shape. The reassurance line is dropped (it would
+          # be a lie), the title says what this is, and the body leads with the diff.
+          #
+          # ⛔ Why this workflow does NOT run the behaviour diff for you: it runs on a fresh
+          # checkout, and `bot/raw/` — the verbatim broker data the engine reads — is
+          # gitignored and therefore absent here. `bot/cli/behaviour_diff.py` run against a
+          # repo with no raw/ degrades: most of the decision surface (bands, bloc caps, risk
+          # caps, sizing, the add channel) never executes, so it prints "no decision changes"
+          # having tested almost nothing. A false all-clear on the one release most likely to
+          # move money is worse than no check. The diff has to run where your data is.
+          if [ "$MAJOR_HOLD" = "true" ]; then
+            title="⚠ MAJOR — Sidecar update: v$LOCAL_V → v$REMOTE_V (behaviour diff required)"
+          else
+            title="Sidecar update: v$LOCAL_V → v$REMOTE_V"
+          fi
+
           {
-            echo "## Sidecar template update: v$LOCAL_V → v$REMOTE_V"
-            echo
-            echo "Automated pull of template-owned files from the upstream Sidecar template."
-            echo "**Merging this changes nothing about your strategy, journal, profile, or schedule.**"
-            echo
+            if [ "$MAJOR_HOLD" = "true" ]; then
+              echo "## ⚠ MAJOR update: v$LOCAL_V → v$REMOTE_V — do not merge yet"
+              echo
+              echo "A MAJOR bump means the template is telling you, in its own changelog"
+              echo "convention, that **this release can change what your loop does with your"
+              echo "money.** Every other update PR you get from this rail says the opposite."
+              echo
+              echo "**Read \`CHANGELOG.md\` in this PR first.** Its newest entry names which"
+              echo "decisions change and how."
+              echo
+              echo "### Then see what it would do to YOUR book"
+              echo
+              echo "Run this in your clone, after a cycle has fetched \`bot/raw/\` — the diff"
+              echo "is only meaningful against your real data, and it says so itself if it is"
+              echo "under-powered. It never writes to your repo:"
+              echo
+              echo '```bash'
+              echo "git fetch origin"
+              echo "git worktree add /tmp/sc-now origin/$DEFAULT_BRANCH"
+              echo "git worktree add /tmp/sc-new origin/$branch"
+              echo "python3 /tmp/sc-new/bot/cli/behaviour_diff.py \\"
+              echo "    --old /tmp/sc-now --new /tmp/sc-new --instance . --text-diff"
+              echo '```'
+              echo
+              echo "It prints every gate, cap, sizing band and REQUIRED ACTION that would"
+              echo "differ today. If it reports decision changes you did not expect, close"
+              echo "this PR — you are not behind, you are declining a change of behaviour."
+              echo
+              echo "Clean up with \`git worktree remove /tmp/sc-now /tmp/sc-new\`."
+              echo
+              echo "---"
+              echo
+              echo "### Files in this PR"
+            else
+              echo "## Sidecar template update: v$LOCAL_V → v$REMOTE_V"
+              echo
+              echo "Automated pull of template-owned files from the upstream Sidecar template."
+              echo "**Merging this changes nothing about your strategy, journal, profile, or schedule.**"
+              echo
+            fi
             echo "### Updated"
             sed 's/^/- `/' /tmp/changed.txt | sed 's/$/`/'
             echo
@@ -221,6 +299,12 @@ jobs:
             echo "Upstream changes: <https://github.com/fjordskii/sidecar/commits/main>"
           } > /tmp/pr-body.md
 
-          gh pr create \
-            --title "Sidecar update: v$LOCAL_V → v$REMOTE_V" \
-            --body-file /tmp/pr-body.md
+          # Draft is the gate: a draft cannot be merged until someone deliberately marks it
+          # ready. Draft PRs are not available on every private-repo plan, so fall back to a
+          # normal PR rather than failing — the title and body still carry the warning.
+          if [ "$MAJOR_HOLD" = "true" ]; then
+            gh pr create --draft --title "$title" --body-file /tmp/pr-body.md \
+              || gh pr create --title "$title" --body-file /tmp/pr-body.md
+          else
+            gh pr create --title "$title" --body-file /tmp/pr-body.md
+          fi
