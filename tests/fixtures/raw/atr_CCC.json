@@ -1,0 +1,16 @@
+{
+  "data": {
+    "indicators": [
+      {
+        "symbol": "CCC",
+        "type": "atr",
+        "series": [
+          {
+            "date": "2026-08-28",
+            "value": "1.2"
+          }
+        ]
+      }
+    ]
+  }
+}

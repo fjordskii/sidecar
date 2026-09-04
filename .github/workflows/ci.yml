@@ -9,9 +9,10 @@ name: CI
 # every one of those repos, three times a day, forever. The repository guard below is what
 # keeps this gate from becoming the thing that interrupts a user's loop.
 #
-# Deliberately narrow for now: the engine (bot/) is not here yet — it arrives in backport
-# step 3 — so the engine, migration and template-emptiness jobs from the source workflow
-# are held back rather than shipped green-because-empty. They land with the code they test.
+# The engine in bot/ ships INERT: nothing in the template calls it. That means CI is the
+# only thing that exercises it before a user does, so the tests below are not a formality.
+# Still held back: the source workflow's CHANGELOG gate — sidecar has no CHANGELOG.md and
+# never has, so the convention BACKPORT.md step 5 leans on does not yet exist here.
 on:
   push:
     branches: [main]
@@ -77,14 +78,58 @@ jobs:
       # No pip install, on purpose. A clone must run from a bare checkout with nothing but
       # the standard library — if a test needs a package, the engine will eventually need
       # it too, and then someone's 09:30 cycle fails inside a container nobody is watching.
-      - name: Assert the tooling has no third-party imports
+      - name: Assert the engine has no third-party imports
         run: |
           set -euo pipefail
+          # No pip install anywhere in this workflow, on purpose — see above. `try:` guards
+          # a deferred import (schema_check prefers jsonschema when it is already there).
           if grep -rnE '^\s*(import|from)\s+(yaml|jsonschema|requests|pydantic|numpy|pandas)\b' \
-               tools/ tests/ --include='*.py' | grep -v 'except' | grep -v '# optional'; then
-            echo "::error::this repo must not require third-party packages at import time"
+               bot/ tools/ tests/ --include='*.py' | grep -v 'except' | grep -v '# optional'; then
+            echo "::error::bot/ must not require third-party packages at import time"
             exit 1
           fi
 
       - name: Tests (standard library only)
         run: cd tests && python3 -m unittest discover -p 'test_*.py' -v
+
+      # The shipped engine payload, asserted here as well as in the tests: this is the file
+      # that would carry somebody's book into a public template, and it is worth two locks.
+      - name: The shipped state template is empty and carries no identity
+        run: |
+          python3 - <<'PY'
+          import json
+          st = json.load(open("bot/state.json"))
+          assert st["positions"] == {} and st["bench"] == {}, "shipped state is not empty"
+          assert st["benchmark_history"] == [], "shipped state carries history"
+          assert st["account_number"] == "", "shipped state carries an account id"
+          bloc = st["policy"]["ai_bloc"]
+          assert bloc["members"] == [], "shipped bloc names somebody's holdings"
+          assert bloc["label"] == "", "shipped bloc carries somebody's theme"
+          assert st["policy"]["bands"]["levered_names"] == []
+          assert open("bot/failures.jsonl").read() == "", "shipped ledger is not empty"
+          print("templates OK")
+          PY
+
+      # tools/secret_scan.py skips directories named raw/ so a local run is not drowned by
+      # the user's own gitignored broker dumps. That leaves one hole the scanner cannot see:
+      # a bot/raw/ that got COMMITTED. Close it here — it is the exact leak shape.
+      - name: No private engine working files are tracked
+        run: |
+          set -euo pipefail
+          if git ls-files --error-unmatch 'bot/raw/*' 'bot/brief.md' 2>/dev/null | grep .; then
+            echo "::error::bot/raw/ or bot/brief.md is tracked — that is live broker data"
+            exit 1
+          fi
+          echo "no private engine files tracked"
+
+      # Invariant 2 (BACKPORT.md): AGENTS.md is replaced wholesale on every update, so a
+      # single engine reference in it activates the engine in every user's next cycle
+      # without their consent. This is what makes "inert" a property rather than a hope.
+      - name: AGENTS.md names no engine file
+        run: |
+          set -euo pipefail
+          if grep -nE 'bot/|precheck|postcheck|brief\.md|state\.json' AGENTS.md; then
+            echo "::error::AGENTS.md must not reference the engine — see BACKPORT.md invariant 2"
+            exit 1
+          fi
+          echo "AGENTS.md is engine-free"

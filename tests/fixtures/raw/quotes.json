@@ -1,0 +1,55 @@
+{
+  "data": {
+    "results": [
+      {
+        "quote": {
+          "symbol": "AAA",
+          "last_trade_price": "120.0000",
+          "adjusted_previous_close": "118.0000"
+        }
+      },
+      {
+        "quote": {
+          "symbol": "BBB",
+          "last_trade_price": "80.0000",
+          "adjusted_previous_close": "81.0000"
+        }
+      },
+      {
+        "quote": {
+          "symbol": "CCC",
+          "last_trade_price": "40.0000",
+          "adjusted_previous_close": "39.5000"
+        }
+      },
+      {
+        "quote": {
+          "symbol": "DDD",
+          "last_trade_price": "30.0000",
+          "adjusted_previous_close": "30.2000"
+        }
+      },
+      {
+        "quote": {
+          "symbol": "EEE",
+          "last_trade_price": "140.0000",
+          "adjusted_previous_close": "139.0000"
+        }
+      },
+      {
+        "quote": {
+          "symbol": "FFF",
+          "last_trade_price": "100.0000",
+          "adjusted_previous_close": "99.0000"
+        }
+      },
+      {
+        "quote": {
+          "symbol": "SPY",
+          "last_trade_price": "770.0000",
+          "adjusted_previous_close": "768.0000"
+        }
+      }
+    ]
+  }
+}

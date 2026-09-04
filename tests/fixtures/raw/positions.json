@@ -1,0 +1,26 @@
+{
+  "data": {
+    "positions": [
+      {
+        "symbol": "AAA",
+        "quantity": "2.0",
+        "average_buy_price": "100.00"
+      },
+      {
+        "symbol": "BBB",
+        "quantity": "3.0",
+        "average_buy_price": "90.00"
+      },
+      {
+        "symbol": "CCC",
+        "quantity": "5.0",
+        "average_buy_price": "38.00"
+      },
+      {
+        "symbol": "DDD",
+        "quantity": "4.0",
+        "average_buy_price": "31.00"
+      }
+    ]
+  }
+}

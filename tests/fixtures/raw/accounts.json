@@ -1,0 +1,11 @@
+{
+  "data": {
+    "accounts": [
+      {
+        "account_number": "000000000",
+        "unsettled_funds": "0.00",
+        "type": "cash"
+      }
+    ]
+  }
+}

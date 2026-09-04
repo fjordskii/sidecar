@@ -1,0 +1,76 @@
+{
+  "_comment": "Machine-maintained state. NEVER hand-edit prose into this file: precheck.py reads it, postcheck.py rewrites it. This is the EMPTY TEMPLATE — the numbers under `policy` are starting defaults, not advice, and the rest fills itself in once a cycle runs the engine. Nothing runs it until you add precheck/postcheck to your own LOOP_PROMPT.md; see bot/README.md.",
+  "schema_version": 1,
+  "account_number": "",
+  "last_cycle": null,
+  "positions": {},
+  "bench": {},
+  "holdings_highs": {},
+  "precommitments": {},
+  "benchmark_history": [],
+  "pass_list": {
+    "_note": "Names examined and ruled out, with the reason. Re-adjudicated on the cadence in policy.pass_list_reexamine_quarters. Expiry forces a LOOK, never a buy.",
+    "permanent": {},
+    "non_permanent": {},
+    "other": {}
+  },
+  "deployment_clock": {
+    "active": false,
+    "started": null,
+    "sessions_elapsed": 0,
+    "target_cash_pct": null,
+    "sessions": null,
+    "note": "OFF by default, and leaving it off is a real choice. A clock sets a cash target with a deadline and a forcing backstop; the instance this engine came from ran one, deployed a large share of the account on a calendar into a falling tape, and retired it. If you turn it on, you are telling the loop it MUST buy by a date."
+  },
+  "known_artifacts": {
+    "pending_deposits": "NON-EVIDENCE. It is the ACH echo of money already counted in cash. total_value excludes it. Never add to available capital.",
+    "drip_orders": "placed_agent='drip' fills are broker dividend reinvestment, not loop actions. Reconcile and move on."
+  },
+  "policy": {
+    "_comment": "STARTING DEFAULTS, not a recommendation. Every number here came from one person's book and is about to govern yours — read each one and change it, or delete the block and let your mandate rule. The engine reads these; your LOOP_PROMPT.md is what makes them binding.",
+    "ai_bloc": {
+      "label": "",
+      "members": [],
+      "soft_cap_pct_equity": 68.0,
+      "hard_cap_pct_equity": 75.0,
+      "soft_cap_pct_risk": 70.0,
+      "hard_cap_pct_risk": 80.0
+    },
+    "bands": {
+      "levered_pct": 25.0,
+      "unlevered_pct": 30.0,
+      "hard_pct": 35.0,
+      "levered_names": []
+    },
+    "positions_soft_cap": 12,
+    "min_new_position_pct_account": 4.0,
+    "at_cap_requires_swap_ranking": true,
+    "cash": {
+      "floor_pct": 5.0,
+      "floor_usd": 50.0,
+      "target_pct_max": null
+    },
+    "sizing_basis": "total_account",
+    "require_tier_declaration": true,
+    "sizing_tiers_pct_account": {
+      "TIER1": [10.0, 12.0],
+      "TIER2": [6.0, 8.0],
+      "TIER3": [4.0, 5.0]
+    },
+    "rerate_tolerance_pts": 1.5,
+    "add_routes": {
+      "ROUTE1_confirming_evidence": true,
+      "ROUTE2_predeclared_scale_in": true,
+      "ROUTE3_macro_weakness_thesis_intact": false,
+      "route3_max_tier": "TIER2",
+      "route3_once_per_name_per_week": true
+    },
+    "precommit_expiry_observations": 10,
+    "pass_list_reexamine_quarters": 2,
+    "journal_rotate_bytes": 250000,
+    "entry_max_bytes": 6000,
+    "entry_max_bytes_light": 3000,
+    "entry_max_bytes_ceiling": 9000,
+    "entry_bytes_per_workload_item": 1200
+  }
+}
