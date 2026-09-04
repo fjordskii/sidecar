@@ -1,0 +1,575 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://loop-core/schema/state.schema.json",
+  "title": "loop instance state.json (schema_version 3)",
+  "description": "Machine-maintained facts for ONE instance. postcheck.py writes it, precheck.py reads it. It holds only things that HAPPENED; anything a user would tune lives in config.yml. Validated by `loop doctor` and by the migration runner before and after every migration. NOTE: `policy` and `account_number` are FORBIDDEN here from schema_version 2 onwards - they moved to config.yml, and finding them here means a migration was skipped or a write path is putting config back into state.",
+  "type": "object",
+  "required": [
+    "schema_version"
+  ],
+  "properties": {
+    "_comment": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "last_cycle": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "policy": {
+      "type": "object",
+      "description": "The numbers the engine enforces. Shipped as starting defaults, not advice. Your LOOP_PROMPT.md is what makes them binding.",
+      "properties": {
+        "_comment": {
+          "type": "string"
+        },
+        "ai_bloc": {
+          "type": "object",
+          "description": "A correlated group treated as one exposure.",
+          "properties": {
+            "label": {
+              "type": "string",
+              "description": "Printed name of the bloc. Empty prints just 'BLOC'. Never hard-code a theme in the engine."
+            },
+            "members": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "soft_cap_pct_equity": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "hard_cap_pct_equity": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "soft_cap_pct_risk": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "hard_cap_pct_risk": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        },
+        "bands": {
+          "type": "object",
+          "properties": {
+            "levered_pct": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "unlevered_pct": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "hard_pct": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "levered_names": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "positions_soft_cap": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "min_new_position_pct_account": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "at_cap_requires_swap_ranking": {
+          "type": "boolean"
+        },
+        "cash": {
+          "type": "object",
+          "properties": {
+            "floor_pct": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "floor_usd": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "target_pct_max": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "clock_retired": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Present means the deployment clock was retired; precheck then prints no target, no deadline, no backstop."
+            }
+          }
+        },
+        "sizing_basis": {
+          "type": "string",
+          "enum": [
+            "total_account",
+            "equity"
+          ]
+        },
+        "require_tier_declaration": {
+          "type": "boolean"
+        },
+        "sizing_tiers_pct_account": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "rerate_tolerance_pts": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "add_routes": {
+          "type": "object"
+        },
+        "precommit_expiry_observations": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "pass_list_reexamine_quarters": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "journal_rotate_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "entry_max_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "entry_max_bytes_light": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "entry_max_bytes_ceiling": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "entry_bytes_per_workload_item": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "account_number": {
+      "type": "string",
+      "description": "Ships EMPTY. Your broker account id, used only to match the accounts feed for unsettled funds. It is the single value most likely to leak \u2014 tools/secret_scan.py fails the build on it."
+    },
+    "positions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "entry_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "spy_at_entry": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "lane": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tier": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "review_trigger": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "review_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_add": {
+            "$ref": "#/definitions/addRecord"
+          },
+          "last_route3": {
+            "$ref": "#/definitions/addRecord"
+          },
+          "add_history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/addRecord"
+            }
+          },
+          "tranche_plan": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "bench": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "high": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "high_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "gate": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "holdings_highs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "high": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "high_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "precommitments": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "gate_price": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "direction": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "lte",
+              "gte",
+              null
+            ]
+          },
+          "observations_failed": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "last_checked": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "retired_on": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "retired_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "pass_list": {
+      "type": "object",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "permanent": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "non_permanent": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "other": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "benchmark_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "date"
+        ],
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "slot": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cost": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "book_ret_pct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "spy_matched_ret_pct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "alpha_pts": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "alpha_usd": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "deployment_clock": {
+      "type": "object",
+      "description": "Clock PROGRESS and its settings. Ships inactive on purpose: a clock tells the loop it MUST buy by a date.",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "started": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sessions_elapsed": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "known_artifacts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "definitions": {
+    "addRecord": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "date": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cycle": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "route": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "tier": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "amount": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "order_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "backfilled_from": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

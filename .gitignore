@@ -11,7 +11,14 @@ ops/run.log
 .env.*
 !.env.example
 
-# Python build artifacts (tools/ and tests/ are the repo's first Python).
+# The engine's private working files. bot/raw/ is verbatim broker JSON — your real
+# positions, balances and order ids — and brief.md is computed from it. Neither is ever
+# committed. (tools/secret_scan.py deliberately SKIPS directories named raw/, so these
+# two lines are the control, not the scanner; CI separately refuses a tracked bot/raw/.)
+bot/raw/
+bot/brief.md
+
+# Python build artifacts.
 __pycache__/
 *.pyc
 

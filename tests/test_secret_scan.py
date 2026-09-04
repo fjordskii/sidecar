@@ -13,6 +13,7 @@ copy uses a synthetic stand-in of the same shape, which is all the scanner reaso
 Never replace it with a real one.
 """
 
+import json
 import os
 import sys
 import unittest
@@ -91,6 +92,26 @@ class TestSecretScan(unittest.TestCase):
         text = f'{{"account_number": "{FAKE_ACCOUNT}", "spy_at_entry": 751.28}}'  # secret-scan: allow
         found = secret_scan.scan_text(text, "tests/fixtures/x.json", fixtures_dir=True)
         self.assertEqual([f["rule"] for f in found], ["ACCOUNT_NUMBER"])
+
+    def test_the_fixture_directory_declares_itself(self):
+        """A shape-exempt directory must carry a written justification a reviewer can read."""
+        marker = os.path.join(ROOT, "tests", "fixtures", secret_scan.DIR_ALLOW_FILE)
+        self.assertTrue(os.path.exists(marker))
+        with open(marker, encoding="utf-8") as f:
+            text = f.read()
+        self.assertIn("SYNTHETIC", text)
+        self.assertIn("account-number rule", text,
+                      "the exemption must say what it does NOT waive")
+
+    def test_the_shipped_state_template_is_impersonal(self):
+        """The backport payload's riskiest file: bot/state.json came from a real book."""
+        with open(os.path.join(ROOT, "bot", "state.json"), encoding="utf-8") as f:
+            st = json.load(f)
+        self.assertEqual(st["positions"], {})
+        self.assertEqual(st["bench"], {})
+        self.assertEqual(st["benchmark_history"], [])
+        self.assertEqual(st["account_number"], "")
+        self.assertEqual(secret_scan.scan_text(json.dumps(st, indent=2), "bot/state.json"), [])
 
     def test_the_template_itself_is_clean(self):
         """The build gate, run against the real tree. If this fails, do not publish."""

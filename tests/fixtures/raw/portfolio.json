@@ -1,0 +1,10 @@
+{
+  "data": {
+    "account_number": "000000000",
+    "total_value": "1800.00",
+    "equity_value": "800.00",
+    "cash": "1000.00",
+    "pending_deposits": "0.00",
+    "buying_power": {"buying_power": "1000.00"}
+  }
+}
