@@ -126,6 +126,24 @@ No news or movers tooling? That data comes from web search (step 3), not the tra
 
 ---
 
+## THE DETERMINISTIC LAYER — runs first, and is not optional
+
+`bot/` computes everything mechanical: cash as a % of the account, position weights on both
+bases, per-name bands, concentration in dollars **and** in daily risk, tier sizing, add-route
+cooldowns, pre-commitment gates and a ledger that carries an unresolved finding into the next
+cycle. Full contract: `bot/README.md`.
+
+**Why it exists:** this loop is a model reading prose, and prose rules fail silently. A rule
+went unrun for ~40 cycles before anyone noticed. Arithmetic belongs to code; judgment belongs
+to you. Where the brief and your reasoning disagree about a *number*, **the brief is right.**
+
+⛔ **If `precheck.py` crashes or reports STATE UNREADABLE: fall back to this file manually and
+do NOT assume any gate passed.** A cycle that cannot read the broker HOLDS and says so.
+
+⚠ **Your numbers are in `bot/state.json` under `policy`.** They arrived as template defaults
+from somebody else's book. Read them once and make them yours — they are what the gates below
+enforce.
+
 ## THE CYCLE
 
 Nine states, in order, each with an **exit gate**. Never advance past a failed gate; do what the
@@ -168,18 +186,47 @@ because the journal tail looked sufficient.
 - **Cross-sector scan** per the discipline above, checked against the entry test before dismissal.
 - **Deeper diligence as needed**: historicals, technicals, fundamentals, earnings calendar, chains.
 
-_Gate:_ live portfolio + positions in hand. The broker API outranks the journal for state; another
-runner may have traded since the last entry.
+**Then run the engine.** `mkdir -p bot/raw` (it is gitignored, so it is absent in a fresh
+clone), dump each broker read **VERBATIM** to `bot/raw/*.json` — portfolio, accounts,
+positions, quotes, orders, and `atr_<SYM>.json` for **every** holding — then:
 
-**4. DECIDE.** Form the thesis: what the tape says, how the book is doing, and this cycle's actions
-with reasons. Name what you considered and rejected; a rejected trade with a reason is information
-for the next cycle. Check every intended action against RISK — HARD LIMITS *before* EXECUTE, not
-after.
+```bash
+python3 bot/precheck.py          # writes and prints bot/brief.md
+```
 
-_Gate:_ every intended order fits inside the hard limits, or it's already been dropped.
+⛔ **Write each tool's ENTIRE response.** Do not hand-transcribe or abridge: a check added
+later must not silently find a field missing. **Without full ATR coverage the risk caps are
+not evaluated**, and the brief says so rather than pretending otherwise.
+
+_Gate:_ live portfolio + positions in hand, and `bot/brief.md` written this cycle. The broker
+API outranks the journal for state; another runner may have traded since the last entry.
+
+**4. DECIDE — from `bot/brief.md`, not from raw JSON.** Cash %, weights, bloc %, risk %, band
+breaches, pre-commitment gates and their counters, roll-off dates and sizing limits are
+**already computed**. Do not recompute them, and do not contradict them without saying so.
+
+**Resolve or explicitly justify EVERY item under 🚨 REQUIRED ACTIONS.** They are carried
+failures and they do not age out. Spend the cycle on what only judgment can do: is this a real
+crack or a positioning flush, is the thesis falsified, what conviction tier does this deserve.
+
+⛔ **A carried finding is a CLAIM; the live broker fetch is the FACT.** Anything the fetch
+contradicts prints under **ℹ️ Stale carried findings** — not an action item, and never a reason
+to trade. Only 🚨 items bind.
+
+Then form the thesis as usual: what the tape says, how the book is doing, this cycle's actions
+with reasons. Name what you considered and rejected — a rejected trade with a reason is
+information for the next cycle. Check every intended action against RISK — HARD LIMITS
+*before* EXECUTE, not after.
+
+_Gate:_ every 🚨 REQUIRED ACTION is resolved or justified in writing, and every intended order
+fits inside the hard limits or has already been dropped.
 
 **5. EXECUTE** per the autonomy setting, all orders against `{{ACCOUNT_ID}}`. Capture each order's
 id, status, and fill. Preview before placing when sizing is unclear.
+
+⛔ **Declare TIER + reason BEFORE ordering**, in the journal entry, after the symbol:
+`BUY <SYM> $230 — TIER 2 … `. `postcheck.py` FAILS any cycle that ordered without a declared
+tier, and any fill that landed outside its declared tier's band. The tier IS the size.
 
 _Gate:_ every placed order has an id captured. Propose-only cycles exit here by design; journal
 the exact proposed orders instead.
@@ -189,8 +236,13 @@ runner placed since your journal read. Also confirm the **order path itself**: o
 no orders, make one review/preview call anyway. A loop that hasn't proven its pipe is one quiet
 morning away from running read-only for days while looking healthy.
 
-_Gate:_ fills confirmed (or none pending), and you know whether the order path worked. That's the
-`order_path` field on the status line.
+⛔ **If you placed anything, RE-DUMP `bot/raw/orders.json` AND `bot/raw/positions.json` before
+postcheck.** The state-3 dump predates the order, so without this a fill is invisible to the
+recorder and a sale still looks held. Re-dump **both** — otherwise neither leg of a swap lands
+in state.
+
+_Gate:_ fills confirmed (or none pending), raw re-dumped if anything was placed, and you know
+whether the order path worked. That's the `order_path` field on the status line.
 
 **7. JOURNAL.** Append the entry. Identify which runner you are (cloud routine / local / interactive)
 and which slot, so the journal stays debuggable when runners overlap. **The status line comes first
@@ -236,7 +288,21 @@ month.
 _Gate:_ entry appended, status line accurate, and `DECISIONS.md` reflects what this cycle actually
 decided — every order placed has a row, every resolved row is closed.
 
-**8. PERSIST.** The repo `{{REPO_URL}}` is this loop's durable state. Every run commits and pushes
+**8. PERSIST.** First let the engine validate and record the cycle:
+
+```bash
+python3 bot/postcheck.py --cycle "YYYY-MM-DD HH:MM" --commit
+```
+
+It validates the entry, auto-fixes what is mechanical, updates `bot/state.json`, and carries
+anything unresolved into the next brief — escalating a failure that recurs 3+ cycles as *"the
+rule is wrong, not the run."*
+
+⛔ **While trimming an over-long entry, run it WITHOUT `--commit`.** Iterate bare; pass
+`--commit` only on the final clean run, as its own command — never chained behind a commit that
+may find nothing to do.
+
+Then the repo `{{REPO_URL}}` is this loop's durable state. Every run commits and pushes
 **everything** changed: the entry *and* any mandate edit made this cycle.
 
 ```bash

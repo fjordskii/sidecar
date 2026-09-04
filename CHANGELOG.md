@@ -49,6 +49,71 @@ fact, something nobody established at the time — which is exactly what marker 
 
 ---
 
+## [2.0.0] — 2026-09-04 · the engine becomes binding
+
+**DECISION: YES — from this release a new clone's cycle can be BLOCKED by a gate.**
+
+Every release since 1.8.0 shipped the engine and said, truthfully, that nothing ran it. This
+one wires `bot/precheck.py` and `bot/postcheck.py` into the template's own `LOOP_PROMPT.md`,
+at cycle states 3 through 8. A clone created from this version runs the deterministic layer
+from its first cycle, and the numbers in `bot/state.json` stop being documentation.
+
+### Which decisions change — named, because "it adds checks" is not good enough
+
+New findings a cycle must resolve or justify in writing before it may proceed:
+
+- `BLOC_SOFT_CAP` · `BLOC_HARD_CAP` · `BLOC_RISK_HARD` — concentration, in dollars and in
+  ATR-denominated daily risk. Inert on a book with no bloc members declared.
+- `BAND_BREACH` · `BAND_HARD` — per-name weight against its band. **Advisory until the book
+  holds `policy.bands.min_positions_to_bind` (4) positions** — see below.
+- `LIVE_TIER_MISSING` · `NO_REVIEW_TRIGGER` — a held position with no conviction tier or no
+  review trigger recorded.
+- `PRECOMMIT_EXPIRED` — a pre-commitment that has failed its observation count.
+- `CARRIED_UNADDRESSED` — a prior REQUIRED ACTION the entry does not mention. Findings do not
+  age out; that is the point of the ledger.
+
+`postcheck.py` additionally **fails a cycle** that placed an order with no declared TIER, or
+whose fill landed outside its declared tier's band, or that omitted the weekly benchmark line,
+or whose entry has no status line.
+
+Sizing becomes tiered — a conviction tier as a percentage of the total account — replacing
+whatever flat starter size a mandate had drifted into. Adds become explicit routes with a
+per-name weekly cooldown on the macro-weakness route.
+
+### Fixed — a gate that could not be satisfied
+
+Per-name bands are now **advisory until the book holds four positions**
+(`policy.bands.min_positions_to_bind`, and an instance may set it to 0).
+
+This is arithmetic, not tuning. With two positions the smaller is at least 50% of equity; with
+three, at least 33.3%. The shipped 35% hard ceiling is therefore **unreachable below three
+names** and needs four to hold with any realistic spread. Binding it from cycle one meant a
+new user's first brief opened with high-severity findings ordering them to trim positions they
+had just bought, to meet a limit no allocation of their book could have met. A band enforces
+diversification *within* a built book; it is not a rule you can obey while building one. The
+weights are still printed either way — the user sees exactly where they stand.
+
+### Existing repos are NOT switched on
+
+Your `LOOP_PROMPT.md` is yours. The update rail has never touched it once setup filled it in,
+and `AGENTS.md` — the one file replaced wholesale in an initialized repo — names no part of
+`bot/`, which CI asserts on every commit. So this release changes nothing about a running loop
+unless its owner asks.
+
+To ask: **`/sidecar-activate`**. It reads the policy numbers out in plain language, runs
+`precheck.py` once so you can see exactly which findings fire on your actual book *before*
+anything binds, requires an explicit yes, and then edits your mandate as a PR you can close.
+It refuses to run `postcheck.py --commit` or to place an order.
+
+### Upgrading
+
+This is the first MAJOR, and the rail holds it: you will get a **draft** PR titled
+`⚠ MAJOR … (behaviour diff required)` rather than the usual routine one. Read `CHANGELOG.md`,
+run `bot/cli/behaviour_diff.py` against your clone, and close the PR if you do not want this.
+Declining is not falling behind.
+
+---
+
 ## [1.10.0] — 2026-09-04 · a way in for people without a broker
 
 **DECISION: no — onboarding copy only. No gate, cap, size, route, clock or REQUIRED ACTION

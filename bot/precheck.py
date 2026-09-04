@@ -345,10 +345,31 @@ def build(state: dict) -> str:
         fail("BLOC_RISK_HARD", f"bloc {bloc_risk_pct:.1f}% of risk >= hard cap", "high", False)
 
     # per-name bands
+    #
+    # ⚠ A BAND CANNOT BIND ON A BOOK TOO SMALL TO SATISFY IT. With two positions the
+    # smaller one is at least 50% of equity; with three, at least 33.3%. So a 35% hard
+    # ceiling is arithmetically unsatisfiable below three names and needs four to hold
+    # with any realistic spread. Binding it anyway means a new user's FIRST cycle opens
+    # with high-severity findings ordering them to trim positions they just bought, to
+    # meet a limit no allocation of their book could have met.
+    #
+    # The band's job is diversification WITHIN a built book; it is not a rule you can
+    # obey while building one. Below the threshold the weights are still printed — the
+    # user sees exactly where they stand — they simply are not charged as findings.
+    # `bands.min_positions_to_bind` is policy, not a constant, so an instance that wants
+    # them binding from position one can set it to 0.
     bands = pol.get("bands") or {}
     lev = set(bands.get("levered_names") or [])
+    min_n = int(num(bands.get("min_positions_to_bind"), 4))
+    bands_bind = len(rows) >= min_n
+    if rows and not bands_bind:
+        add(f"- ⚠ per-name bands are ADVISORY until the book holds **{min_n}** positions "
+            f"(currently {len(rows)}) — a {num(bands.get('hard_pct'), 0):.0f}% ceiling is not "
+            f"reachable with fewer. Weights above are still the real ones.")
     for r in rows:
         cap = num(bands.get("levered_pct")) if r["sym"] in lev else num(bands.get("unlevered_pct"))
+        if not bands_bind:
+            continue
         if r["wt"] >= num(bands.get("hard_pct"), 999):
             fail("BAND_HARD", f"{r['sym']} {r['wt']:.1f}% >= {bands.get('hard_pct')}% hard ceiling", "high", False)
         elif r["wt"] >= cap:

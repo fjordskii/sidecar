@@ -1,5 +1,5 @@
 {
-  "_comment": "Machine-maintained state. NEVER hand-edit prose into this file: precheck.py reads it, postcheck.py rewrites it. This is the EMPTY TEMPLATE — the numbers under `policy` are starting defaults, not advice, and the rest fills itself in once a cycle runs the engine. Nothing runs it until you add precheck/postcheck to your own LOOP_PROMPT.md; see bot/README.md.",
+  "_comment": "Machine-maintained state. NEVER hand-edit prose into this file: precheck.py reads it, postcheck.py rewrites it. This is the EMPTY TEMPLATE \u2014 the numbers under `policy` are starting defaults, not advice, and the rest fills itself in once a cycle runs the engine. Nothing runs it until you add precheck/postcheck to your own LOOP_PROMPT.md; see bot/README.md.",
   "schema_version": 1,
   "account_number": "",
   "last_cycle": null,
@@ -27,7 +27,7 @@
     "drip_orders": "placed_agent='drip' fills are broker dividend reinvestment, not loop actions. Reconcile and move on."
   },
   "policy": {
-    "_comment": "STARTING DEFAULTS, not a recommendation. Every number here came from one person's book and is about to govern yours — read each one and change it, or delete the block and let your mandate rule. The engine reads these; your LOOP_PROMPT.md is what makes them binding.",
+    "_comment": "STARTING DEFAULTS, not a recommendation. Every number here came from one person's book and is about to govern yours \u2014 read each one and change it, or delete the block and let your mandate rule. The engine reads these; your LOOP_PROMPT.md is what makes them binding.",
     "ai_bloc": {
       "label": "",
       "members": [],
@@ -40,6 +40,7 @@
       "levered_pct": 25.0,
       "unlevered_pct": 30.0,
       "hard_pct": 35.0,
+      "min_positions_to_bind": 4,
       "levered_names": []
     },
     "positions_soft_cap": 12,
@@ -53,9 +54,18 @@
     "sizing_basis": "total_account",
     "require_tier_declaration": true,
     "sizing_tiers_pct_account": {
-      "TIER1": [10.0, 12.0],
-      "TIER2": [6.0, 8.0],
-      "TIER3": [4.0, 5.0]
+      "TIER1": [
+        10.0,
+        12.0
+      ],
+      "TIER2": [
+        6.0,
+        8.0
+      ],
+      "TIER3": [
+        4.0,
+        5.0
+      ]
     },
     "rerate_tolerance_pts": 1.5,
     "add_routes": {
