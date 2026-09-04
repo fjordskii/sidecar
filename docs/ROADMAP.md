@@ -118,7 +118,12 @@ performs the migration when v2 lands — the payoff for shipping the rail first.
    gated states (AUTHENTICATE → … → VERIFY); every journal entry opens with a machine-readable
    status line (state / order_path / push); rotation may not archive live standing triggers.
    Reaches railed users as their first real "Sidecar update" PR.
-6. ⬜ `loop/` shell gates (v1.2)
+6. ~~⬜ `loop/` shell gates (v1.2)~~ — **STRUCK 2026-09-04.** Superseded before it was
+   written: the deterministic layer arrived instead as ~76KB of tested Python backported
+   from the reference instance (`bot/precheck.py`, `bot/postcheck.py`), which does this
+   and considerably more. It ships **inert** — nothing in the template calls it and
+   `AGENTS.md` names no part of it — so it cannot change what any existing user's cycle
+   does. See `BACKPORT.md` in the reference repo.
 7. ⬜ Migration kit run for existing users
 8. ⬜ Health surface in the web app (v2)
 

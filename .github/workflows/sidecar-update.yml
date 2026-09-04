@@ -5,8 +5,13 @@
 # sidecar-manifest.json. Your files are structurally untouchable:
 #
 #   - system: replaced with the upstream version
+#   - system_setup: onboarding files (INTERVIEW, SETUP, the init command…), replaced only
+#     while this repo is still UNINITIALIZED. Once your mandate is filled in, an interview
+#     you already answered is finished business — skipped, and named in the PR body
 #   - system_if_uninitialized: replaced ONLY while the file still contains {{PLACEHOLDER}}
 #     markers — once setup filled it in, it's yours and is skipped (named in the PR body)
+#   - system_if_absent: written ONLY when the file is missing. Accumulating files live here
+#     (JOURNAL.md, DECISIONS.md, bot/state.json) — see the manifest's note
 #   - user: never read, never touched
 #
 # First run on a repo that predates this rail treats VERSION as 0.0.0 and opens a PR that
@@ -84,10 +89,39 @@ jobs:
             echo "$1" >> /tmp/changed.txt
           }
 
+          # The one setup-token test, defined once and used by two classes below. It greps
+          # for SPECIFIC tokens, never a blanket '{{': docs mention {{PLACEHOLDER}} in prose
+          # and a blanket check would read an untouched SETUP.md as "uninitialized" forever.
+          has_setup_tokens() {
+            [ -f "$1" ] && grep -qE '\{\{(ACCOUNT_ID|BROKER|MCP_SERVER|STRATEGY|REPO_PATH|CLI_PATH|NODE_PATH|DATE|SLOTS|AUTONOMY|AUTONOMY_LINE)\}\}' "$1"
+          }
+
+          # Is THIS REPO still being onboarded? Asked of LOOP_PROMPT.md, because that is the
+          # file setup actually fills in. The system_setup files cannot answer for themselves:
+          # setup-schema.json and the init command carry no tokens at all, while SETUP.md and
+          # ops/ROUTINE_PROMPT.md carry them only as printed examples that are never filled.
+          if [ ! -f LOOP_PROMPT.md ] || has_setup_tokens LOOP_PROMPT.md; then
+            uninitialized=true
+          else
+            uninitialized=false
+          fi
+
           # system: always replaced
           while IFS= read -r f; do
             fetch "$f"
           done < <(jq -r '.files.system[]' /tmp/upstream-manifest.json)
+
+          # system_setup: onboarding material. Delivered while this repo is still being set
+          # up; once the mandate is filled in, these are finished business and updating them
+          # is churn in a PR the user has to read. Declining them must never mean declining
+          # engine or rail fixes, which is why they are their own class rather than a note.
+          while IFS= read -r f; do
+            if [ "$uninitialized" = "true" ]; then
+              fetch "$f"
+            else
+              echo "$f" >> /tmp/skipped.txt
+            fi
+          done < <(jq -r '.files.system_setup[]? // empty' /tmp/upstream-manifest.json)
 
           # system_if_uninitialized: replaced only while real placeholder tokens remain.
           # A specific-token grep, not '{{' — templates mention {{PLACEHOLDER}} in prose
@@ -97,7 +131,7 @@ jobs:
           # ONLY FILL-IN TEMPLATES MAY BE LISTED HERE. A file that accumulates content
           # belongs in system_if_absent below — see that block.
           while IFS= read -r f; do
-            if [ -f "$f" ] && ! grep -qE '\{\{(ACCOUNT_ID|BROKER|MCP_SERVER|STRATEGY|REPO_PATH|CLI_PATH|NODE_PATH|DATE|SLOTS|AUTONOMY|AUTONOMY_LINE)\}\}' "$f"; then
+            if [ -f "$f" ] && ! has_setup_tokens "$f"; then
               echo "$f" >> /tmp/skipped.txt
             else
               fetch "$f"
@@ -170,9 +204,10 @@ jobs:
             sed 's/^/- `/' /tmp/changed.txt | sed 's/$/`/'
             echo
             if [ -s /tmp/skipped.txt ]; then
-              echo "### Skipped — already yours"
-              echo "These still have upstream changes, but setup already filled them in, so they"
-              echo "were left alone. Skim the upstream diff if you're curious:"
+              echo "### Skipped — yours, or already behind you"
+              echo "These changed upstream and were left alone: either setup filled them in and"
+              echo "they are yours now, or they are onboarding material this repo is past."
+              echo "Skim the upstream diff if you're curious:"
               sed 's/^/- `/' /tmp/skipped.txt | sed 's/$/`/'
               echo
             fi

@@ -10,19 +10,26 @@
     "system": [
       "AGENTS.md",
       "CLAUDE.md",
-      "INTERVIEW.md",
-      "SETUP.md",
-      "README.md",
       "LICENSE",
       "ops/README.md",
+      "docs/MIGRATION.md",
+      ".claude/commands/sidecar-upgrade.md",
+      "sidecar-manifest.json",
+      "VERSION",
+      "bot/README.md",
+      "bot/precheck.py",
+      "bot/postcheck.py",
+      "bot/schema_check.py",
+      "bot/schema/state.schema.json",
+      "bot/cli/behaviour_diff.py"
+    ],
+    "system_setup": [
+      "INTERVIEW.md",
+      "SETUP.md",
+      "setup-schema.json",
       "ops/ROUTINE_PROMPT.md",
       "ops/sidecar.plist.example",
-      "docs/MIGRATION.md",
-      ".claude/commands/sidecar-init.md",
-      ".claude/commands/sidecar-upgrade.md",
-      "setup-schema.json",
-      "sidecar-manifest.json",
-      "VERSION"
+      ".claude/commands/sidecar-init.md"
     ],
     "system_if_uninitialized": [
       "LOOP_PROMPT.md",
@@ -30,23 +37,32 @@
     ],
     "system_if_absent": [
       "JOURNAL.md",
-      "DECISIONS.md"
+      "DECISIONS.md",
+      "bot/state.json",
+      "bot/failures.jsonl"
     ],
     "user": [
       "PROFILE.md",
+      "README.md",
       "JOURNAL.md",
       "JOURNAL_ARCHIVE.md",
       "DECISIONS.md",
       "DECISIONS_ARCHIVE.md",
       "LOOP_PROMPT.md",
-      "ops/run.log"
+      "ops/run.log",
+      "bot/state.json",
+      "bot/failures.jsonl",
+      "bot/raw/",
+      "bot/brief.md"
     ]
   },
   "notes": {
-    "system": "Template-owned. Replaced wholesale by sidecar-update.yml on every upstream release.",
-    "system_if_uninitialized": "Template-owned only while the file still contains real {{TOKEN}} markers (the rail greps for specific setup tokens like {{ACCOUNT_ID}}, not a blanket '{{' — templates mention {{PLACEHOLDER}} in prose). Once setup fills it, the file is the user's and is never touched again — it is skipped and named in the update PR instead. Only FILL-IN TEMPLATES belong here: a file that is written once and then owned. A file that ACCUMULATES content belongs in system_if_absent — see the note there.",
-    "system_if_absent": "Delivered ONLY when the file does not exist, and never touched again — the check is existence, not content. JOURNAL.md and DECISIONS.md accumulate: a user appends to them for months. Token-gating them was a data-loss bug (fixed 1.7.1). The gate asks 'does this still contain a placeholder', which for an accumulating file answers 'yes' for as long as any one token in its header goes unfilled — so a journal with two months of real entries and a single {{AUTONOMY}} left in its standing-rules block was replaced wholesale by the 40-line seed, under a PR body promising the journal was untouched. Existence is the only safe test for these.",
-    "user": "Never touched by tooling. JOURNAL.md, DECISIONS.md and LOOP_PROMPT.md appear here and in a system class; the ownership test resolves the overlap — placeholder tokens for LOOP_PROMPT.md, existence for JOURNAL.md and DECISIONS.md. A repo that predates DECISIONS.md simply doesn't have the file, so the rail delivers the seed on the next update and never touches it again.",
+    "system": "Template-owned. Replaced wholesale by sidecar-update.yml on every upstream release. The engine under bot/ lives here so users receive fixes to it \u2014 but the engine is INERT: nothing in the template calls it, and AGENTS.md names no part of it, so a delivered engine update cannot change what a cycle does. Only the user's own LOOP_PROMPT.md can invoke it.",
+    "system_setup": "Onboarding files, replaced only while the repo is still UNINITIALIZED \u2014 same setup-token test as system_if_uninitialized, read off LOOP_PROMPT.md. Once setup has filled the mandate in, these are finished business: an interview you already answered and a SETUP.md you already followed are not worth a PR every release. They are skipped and named in the PR body, so a repo past onboarding can decline them without declining engine fixes.",
+    "system_if_uninitialized": "Template-owned only while the file still contains real {{TOKEN}} markers (the rail greps for specific setup tokens like {{ACCOUNT_ID}}, not a blanket '{{' \u2014 templates mention {{PLACEHOLDER}} in prose). Once setup fills it, the file is the user's and is never touched again \u2014 it is skipped and named in the update PR instead. Only FILL-IN TEMPLATES belong here: a file that is written once and then owned. A file that ACCUMULATES content belongs in system_if_absent \u2014 see the note there.",
+    "system_if_absent": "Delivered ONLY when the file does not exist, and never touched again \u2014 the check is existence, not content. JOURNAL.md and DECISIONS.md accumulate: a user appends to them for months. Token-gating them was a data-loss bug (fixed 1.7.1). The gate asks 'does this still contain a placeholder', which for an accumulating file answers 'yes' for as long as any one token in its header goes unfilled \u2014 so a journal with two months of real entries and a single {{AUTONOMY}} left in its standing-rules block was replaced wholesale by the 40-line seed, under a PR body promising the journal was untouched. Existence is the only safe test for these. bot/state.json and bot/failures.jsonl are here for the same reason and a second one: state.json is the engine's live record of positions, entry dates and clocks, so a fresh clone needs the empty template ONCE and a running instance must never receive it again.",
+    "user": "Never touched by tooling. README.md is here because an instance that wrote its own README lost it on every update while this file listed it under system \u2014 a live bug until this release. JOURNAL.md, DECISIONS.md, LOOP_PROMPT.md, bot/state.json and bot/failures.jsonl appear here and in a system class; the ownership test resolves the overlap \u2014 placeholder tokens for LOOP_PROMPT.md, existence for the rest. bot/raw/ and bot/brief.md are gitignored broker data and are listed only to say, in writing, that nothing upstream will ever write them.",
+    "not_delivered": "tools/, tests/ and docs/ROADMAP.md are deliberately in NO class. tools/ and tests/ are maintainer CI for the template repo itself: tools/secret_scan.py fails a build on anything shaped like a real account number, which is correct upstream and wrong in a private clone whose LOOP_PROMPT.md legitimately contains one. docs/ROADMAP.md is a maintainer planning doc that says so in its own header and is not read by agents during cycles. .github/workflows/ci.yml is likewise unlisted and additionally guarded on the repository name. Anything else appearing here is an oversight \u2014 tests/test_manifest.py fails on a tracked file that is in no class and on no exclusion list.",
     "workflow": ".github/workflows/sidecar-update.yml cannot update itself (GITHUB_TOKEN may not push workflow-file changes). When the rail changes upstream, the update PR body flags it as a one-file manual copy."
   }
 }
