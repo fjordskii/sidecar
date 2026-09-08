@@ -49,6 +49,47 @@ fact, something nobody established at the time — which is exactly what marker 
 
 ---
 
+## [2.1.0] — 2026-09-08 · one command
+
+**DECISION: no — no gate, cap, size, route, clock or REQUIRED ACTION changes.**
+
+⚠ **Stated plainly so it can be argued with:** `/sidecar-upgrade` can now end with the engine
+switched on, which it could not before. It is marked `no` because it cannot do that without
+showing the user their policy numbers, running `precheck.py` so they can see exactly which
+findings would fire on their book, and getting an explicit yes — the identical consent gate
+`/sidecar-activate` always required. What changed is which command name surfaces it, not
+whether a human chooses. Read as a MAJOR instead if you disagree; the reasoning is here rather
+than assumed.
+
+### Changed — a non-technical user should only ever type one thing
+
+Upgrading used to be two commands and, for anyone on a pre-rail copy, a pasted paragraph before
+either. That is too much to ask.
+
+- **`/sidecar-upgrade` now offers the deterministic layer itself**, in the same pass, when the
+  engine is present and the user's mandate does not call it. It reads the policy numbers out,
+  shows what would fire today, asks once, takes no for an answer, and puts the mandate edit in
+  the **same PR** as the update — one command, one thing to merge.
+- **`/sidecar-activate` stays** for someone who declined and came back later. Nobody should need
+  to know it exists.
+- It never runs `postcheck.py --commit` (it rewrites state and can rotate a journal), and never
+  edits `LOOP_PROMPT.md` without that explicit yes.
+
+### Fixed — a migration doc that sent users to a command they did not have
+
+`docs/MIGRATION.md` told pre-rail users to run `/sidecar-upgrade`, offering a pasted prompt only
+to anyone with "no `.claude/commands/` folder". **The 2026-08-10 snapshot has that folder** — it
+holds `sidecar-init.md` and nothing else. So the five original users would have read the
+condition, seen the folder, typed the command, got nothing, and been stuck on step one.
+
+The doc now leads with the real problem and a two-click fix: a link that opens GitHub's editor
+with a six-line `sidecar-upgrade.md` stub **already filled in**, which fetches and follows the
+real command. Click, commit, then type `/sidecar-upgrade` once. The stub is replaced by the full
+command during that upgrade, so it is needed exactly once. A paste-it-yourself fallback is kept
+for anyone who prefers it.
+
+---
+
 ## [2.0.0] — 2026-09-04 · the engine becomes binding
 
 **DECISION: YES — from this release a new clone's cycle can be BLOCKED by a gate.**

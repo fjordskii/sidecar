@@ -281,6 +281,51 @@ class TestTheMandateActivatesTheEngine(unittest.TestCase):
         self.assertIn("--commit", act, "it must forbid running postcheck --commit")
 
 
+class TestUpgradeIsTheOnlyCommandAUserNeeds(unittest.TestCase):
+    """One command, not two.
+
+    A non-technical user should never have to know a second command name exists. The
+    activation offer therefore lives inside /sidecar-upgrade; /sidecar-activate survives
+    only for someone who declined and came back. These pin that so a later edit cannot
+    quietly split the job in two again.
+    """
+
+    def upgrade(self):
+        return read(ROOT, ".claude", "commands", "sidecar-upgrade.md")
+
+    def test_upgrade_offers_activation_itself(self):
+        up = self.upgrade()
+        self.assertIn("Offer the deterministic layer", up)
+        self.assertIn("bot/precheck.py", up)
+        self.assertIn("same PR", up, "one command should mean one thing to merge")
+
+    def test_upgrade_does_not_delegate_the_job_away(self):
+        """Mentioning /sidecar-activate is fine; sending them there to finish is not."""
+        up = self.upgrade()
+        self.assertIn("only command they should ever need to type", up)
+
+    def test_upgrade_asks_before_touching_a_mandate(self):
+        up = self.upgrade()
+        self.assertIn("explicit yes", up)
+        self.assertIn("take no for an answer", up)
+        self.assertIn("Do not ask twice", up)
+
+    def test_upgrade_forbids_postcheck_commit(self):
+        """postcheck rewrites state and can rotate a journal. An upgrade never runs it."""
+        self.assertIn("postcheck.py --commit` as part of an", self.upgrade())
+
+    def test_the_migration_doc_leads_with_one_command(self):
+        """The five original users have no /sidecar-upgrade file, so the doc must say how
+        to get one before telling them to type it."""
+        mig = read(ROOT, "docs", "MIGRATION.md")
+        self.assertIn("the command doesn't exist yet", mig,
+                      "the doc must not tell a pre-rail user to type a command they lack")
+        self.assertIn("filename=.claude%2Fcommands%2Fsidecar-upgrade.md", mig,
+                      "the two-click bootstrap link must be present")
+        self.assertNotIn("no `.claude/commands/` folder", mig,
+                         "that test was wrong: the 2026-08-10 snapshot HAS that folder")
+
+
 class TestBlocLabelIsConfiguration(TempCloneCase):
     """The bloc's printed name was hard-coded to one instance's theme.
 

@@ -5,27 +5,51 @@ throughout. Nothing here touches your journal, your mandate, or your profile.
 
 Not sure whether you need this? If your repo has no `VERSION` file at its root, you do.
 
-## Easiest: ask Claude
+## Step 1 — give your repo the upgrade command (once, two clicks)
 
-Open your repo in Claude — the same session you use for the loop — and run:
+Your copy predates `/sidecar-upgrade`, so the command doesn't exist yet and typing it does
+nothing. Adding it is two clicks and no typing:
+
+1. Open this link, replacing `<you>/<your-repo>` with your repo:
+
+   `https://github.com/<you>/<your-repo>/new/main?filename=.claude%2Fcommands%2Fsidecar-upgrade.md&value=---%0Adescription%3A%20Bring%20this%20Sidecar%20copy%20up%20to%20date%0A---%0A%0AFetch%20https%3A%2F%2Fraw.githubusercontent.com%2Ffjordskii%2Fsidecar%2Fmain%2F.claude%2Fcommands%2Fsidecar-upgrade.md%0Aand%20follow%20it%20exactly.%20It%20replaces%20this%20file%20during%20the%20upgrade%2C%20so%20this%20stub%20is%20needed%20once.%0A`
+
+   It opens GitHub's editor with the file path **and its contents already filled in.**
+
+2. Click **Commit changes** (straight to `main` is fine).
+
+That's the whole of step 1. The stub is six lines; the real command replaces it during the
+upgrade, so you never do this again.
+
+> Prefer to paste? Create `.claude/commands/sidecar-upgrade.md` with:
+>
+> ```markdown
+> ---
+> description: Bring this Sidecar copy up to date
+> ---
+>
+> Fetch https://raw.githubusercontent.com/fjordskii/sidecar/main/.claude/commands/sidecar-upgrade.md
+> and follow it exactly. It replaces this file during the upgrade, so this stub is needed once.
+> ```
+
+## Step 2 — run it
+
+Open your repo in Claude — the same session you use for the loop — and type:
 
 ```
 /sidecar-upgrade
 ```
 
-It installs the update rail, backfills the version files, skips everything setup personalized, and
-opens a pull request for you to merge. Older copy with no `.claude/commands/` folder? Paste this
-instead:
+That is the only command you need, now or ever. It installs the update rail, backfills the
+version files, skips everything setup personalized, offers to switch the deterministic layer on
+if you want it, and opens **one** pull request for you to merge.
 
-> Upgrade this repo to the latest Sidecar template from
-> https://github.com/fjordskii/sidecar — install `.github/workflows/sidecar-update.yml`, backfill
-> `VERSION` and `sidecar-manifest.json`, and apply the template-owned files listed in the upstream
-> manifest. Do not touch `PROFILE.md`, `JOURNAL.md`, or my filled-in `LOOP_PROMPT.md`. Open it as a
-> pull request.
+After that, updates arrive on their own as a weekly pull request. Merging it is the whole job.
 
-## By hand, on github.com
+## Fallback — no Claude session at all
 
-No terminal needed.
+Steps 1–2 are the supported path. This one gets the rail in without Claude, but it cannot offer
+you the deterministic layer, so run `/sidecar-upgrade` afterwards if you want that.
 
 1. Open this link, replacing `<you>/<your-repo>` — it opens GitHub's editor with the path already
    filled in:
@@ -36,7 +60,7 @@ No terminal needed.
 4. **Actions** tab → enable workflows if GitHub asks → **Sidecar update** → **Run workflow**.
 5. Merge the pull request it opens.
 
-## What the first update actually brings you (v1.8.0)
+## What the upgrade actually brings you
 
 Your loop keeps running exactly as it does today. Specifically:
 
@@ -66,12 +90,17 @@ forever is a perfectly good choice and costs you nothing.
 from the loop this engine was built for*. They are one person's risk limits. They were not
 chosen for your account, and nothing has checked whether they suit it.
 
-## After either path
+## Afterwards
 
 Updates arrive on their own: at most one pull request a week, titled `Sidecar update: vX → vY`.
-Merging it is the whole upgrade. The one exception is the rail file itself — GitHub forbids a
-workflow from editing workflow files, so when that changes the PR body says so. Run
-`/sidecar-upgrade` and it handles that copy for you.
+Merging it is the whole upgrade. Two exceptions, both handled by re-running `/sidecar-upgrade`:
+the rail file itself (GitHub forbids a workflow from editing workflow files, so the PR body says
+so when it changes), and a **MAJOR** release, which arrives as a draft PR titled
+`⚠ MAJOR … (behaviour diff required)` because it can change what your loop does with money.
+
+You never need a second command. `/sidecar-upgrade` also offers the deterministic layer if it is
+present and switched off. `/sidecar-activate` exists only for someone who said no and came back
+later — you should never have to reach for it.
 
 ---
 
@@ -97,7 +126,7 @@ workflow from editing workflow files, so when that changes the PR body says so. 
 - If a user's loop is paused and their repo goes 60 days without commits, GitHub disables the
   scheduled run. A manual dispatch (step 4) or `/sidecar-upgrade` revives it.
 - With push access to a user's repo, just commit the workflow file yourself — then they only merge.
-- **Verified end-to-end for v1.8.0**, against a real `cb67bb2` (2026-08-10) checkout personalised
+- **Verified end-to-end**, against a real `cb67bb2` (2026-08-10) checkout personalised
   the way a live user's is — mandate and `ops/run.sh` filled, own README, real journal. Result:
   all four kept byte-identical; `VERSION`, the manifest, `AGENTS.md`, a seeded `DECISIONS.md` and
   the inert engine delivered; all six onboarding files skipped. Re-run that simulation before any
