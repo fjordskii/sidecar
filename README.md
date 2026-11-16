@@ -1,5 +1,8 @@
 # Sidecar
 
+**Sidecar is closed.** This project is no longer maintained. The repository is kept for the record and will be archived.
+
+
 **An agentic trading loop that rides alongside your real portfolio.**
 
 An AI agent wakes on a schedule, reads the market, trades inside rules you set, and writes down why.
